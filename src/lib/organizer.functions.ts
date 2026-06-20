@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const authSchema = z.object({
+  pubkey: z.string().min(32),
+  signature: z.string().min(40),
+  issued_at: z.string(),
+});
+
 const createSchema = z.object({
   organizer_pubkey: z.string().min(32),
   title: z.string().min(2).max(140),
@@ -54,11 +60,32 @@ export const commitPool = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         commit_tx: z.string().min(10),
         delegation_pda: z.string().min(10),
+        auth: authSchema,
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { verifyWalletSignature } = await import("./wallet-auth.server");
+    // Load the event first so we can check ownership against organizer_pubkey.
+    const { data: ev, error: evErr } = await supabaseAdmin
+      .from("events")
+      .select("organizer_pubkey, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (evErr) throw new Error(evErr.message);
+    if (!ev) throw new Error("Event not found");
+    if (ev.organizer_pubkey !== data.auth.pubkey)
+      throw new Error("Only the event organizer can commit the pool");
+    const v = verifyWalletSignature({
+      pubkey: data.auth.pubkey,
+      signature: data.auth.signature,
+      action: "commit",
+      eventId: data.id,
+      issuedAt: data.auth.issued_at,
+    });
+    if (!v.ok) throw new Error(v.reason);
+
     const { data: row, error } = await supabaseAdmin
       .from("events")
       .update({
@@ -77,12 +104,13 @@ export const commitPool = createServerFn({ method: "POST" })
 export const drawAndPay = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
-      .object({ id: z.string().uuid(), organizer_pubkey: z.string().min(32) })
+      .object({ id: z.string().uuid(), auth: authSchema })
       .parse(d),
   )
   .handler(async ({ data }) => {
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { verifyWalletSignature } = await import("./wallet-auth.server");
       // load event + entries
       const { data: ev, error: evErr } = await supabaseAdmin
         .from("events")
@@ -94,8 +122,16 @@ export const drawAndPay = createServerFn({ method: "POST" })
         return { ok: false as const, message: `Couldn't load event: ${evErr.message}` };
       }
       if (!ev) return { ok: false as const, message: "Event not found" };
-      if (ev.organizer_pubkey !== data.organizer_pubkey)
+      if (ev.organizer_pubkey !== data.auth.pubkey)
         return { ok: false as const, message: "Only the organizer can draw" };
+      const v = verifyWalletSignature({
+        pubkey: data.auth.pubkey,
+        signature: data.auth.signature,
+        action: "draw",
+        eventId: data.id,
+        issuedAt: data.auth.issued_at,
+      });
+      if (!v.ok) return { ok: false as const, message: v.reason };
       if (ev.status === "settled")
         return { ok: false as const, message: "Already settled" };
 
@@ -169,11 +205,33 @@ export const drawAndPay = createServerFn({ method: "POST" })
 export const recordPayout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
-      .object({ winner_id: z.string().uuid(), payout_tx: z.string().min(10) })
+      .object({ winner_id: z.string().uuid(), payout_tx: z.string().min(10), auth: authSchema })
       .parse(d),
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { verifyWalletSignature } = await import("./wallet-auth.server");
+    // Look up the winner's event to verify the caller is the organizer.
+    const { data: winner, error: wErr } = await supabaseAdmin
+      .from("winners")
+      .select("id, event_id, events!inner(organizer_pubkey)")
+      .eq("id", data.winner_id)
+      .maybeSingle();
+    if (wErr) throw new Error(wErr.message);
+    if (!winner) throw new Error("Winner not found");
+    const organizerPubkey = (winner as unknown as { events: { organizer_pubkey: string } }).events
+      .organizer_pubkey;
+    if (organizerPubkey !== data.auth.pubkey)
+      throw new Error("Only the event organizer can record payouts");
+    const v = verifyWalletSignature({
+      pubkey: data.auth.pubkey,
+      signature: data.auth.signature,
+      action: "payout",
+      eventId: (winner as unknown as { event_id: string }).event_id,
+      issuedAt: data.auth.issued_at,
+    });
+    if (!v.ok) throw new Error(v.reason);
+
     const { error } = await supabaseAdmin
       .from("winners")
       .update({ payout_tx: data.payout_tx })
