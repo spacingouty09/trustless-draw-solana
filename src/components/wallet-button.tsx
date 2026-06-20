@@ -3,7 +3,7 @@ import { useState } from "react";
 import { shortAddr } from "@/lib/solana";
 
 export function WalletButton() {
-  const { wallets, select, connect, disconnect, connected, connecting, publicKey, wallet } = useWallet();
+  const { wallets, select, connect, disconnect, connected, connecting, publicKey } = useWallet();
   const [open, setOpen] = useState(false);
 
   if (connected && publicKey) {
@@ -21,13 +21,7 @@ export function WalletButton() {
   if (!open) {
     return (
       <button
-        onClick={() => {
-          if (wallet) {
-            connect().catch(() => setOpen(true));
-          } else {
-            setOpen(true);
-          }
-        }}
+        onClick={() => setOpen(true)}
         disabled={connecting}
         className="inline-flex h-9 items-center rounded-lg bg-gradient-brand px-4 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
       >
@@ -48,7 +42,7 @@ export function WalletButton() {
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
           Select wallet
         </div>
-        {wallets.length === 0 && (
+        {wallets.filter((w) => w.readyState === "Installed" || w.readyState === "Loadable").length === 0 && (
           <div className="px-2 py-2 text-xs text-muted-foreground">
             No wallets detected. Install Phantom or Solflare.
           </div>
@@ -56,10 +50,16 @@ export function WalletButton() {
         {wallets.map((w) => (
           <button
             key={w.adapter.name}
-            onClick={() => {
-              select(w.adapter.name);
+            onClick={async () => {
               setOpen(false);
-              setTimeout(() => connect().catch(() => {}), 50);
+              try {
+                select(w.adapter.name);
+                // Wait a tick so the provider state updates before connect().
+                await new Promise((r) => setTimeout(r, 100));
+                await connect();
+              } catch (err) {
+                console.error("Wallet connect failed", err);
+              }
             }}
             className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-secondary"
           >
