@@ -23,8 +23,14 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
 
     const req = getRequest();
     const reqUrl = new URL(req.url);
-    const redirectUri = `${reqUrl.origin}/api/public/mastodon/callback`;
-    const secure = reqUrl.protocol === "https:";
+    const fwdHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    const fwdProto = req.headers.get("x-forwarded-proto") ?? reqUrl.protocol.replace(":", "");
+    const origin =
+      fwdHost && !/^localhost(?::|$)/i.test(fwdHost) && !/^127\./.test(fwdHost)
+        ? `${fwdProto}://${fwdHost}`
+        : reqUrl.origin;
+    const redirectUri = `${origin}/api/public/mastodon/callback`;
+    const secure = origin.startsWith("https:");
 
     const app = await ensureOauthApp(ev.mastodon_instance, redirectUri);
 
