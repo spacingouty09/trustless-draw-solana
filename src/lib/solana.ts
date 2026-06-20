@@ -7,6 +7,12 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import { Buffer } from "buffer";
+
+// Ensure Buffer exists on window for web3.js
+if (typeof globalThis !== "undefined" && !(globalThis as { Buffer?: unknown }).Buffer) {
+  (globalThis as { Buffer?: unknown }).Buffer = Buffer;
+}
 
 export const DEVNET_RPC = "https://api.devnet.solana.com";
 
@@ -38,7 +44,7 @@ export async function sendCommitMemo(args: {
   const ix = new TransactionInstruction({
     keys: [{ pubkey: args.payer, isSigner: true, isWritable: true }],
     programId: MEMO_PROGRAM_ID,
-    data: new TextEncoder().encode(memo) as Buffer,
+    data: Buffer.from(memo, "utf8"),
   });
   // dust self-transfer to ensure the tx is non-trivial
   const dust = SystemProgram.transfer({
@@ -68,7 +74,7 @@ export async function sendPayoutMemo(args: {
   const ix = new TransactionInstruction({
     keys: [{ pubkey: args.payer, isSigner: true, isWritable: true }],
     programId: MEMO_PROGRAM_ID,
-    data: new TextEncoder().encode(memo) as Buffer,
+    data: Buffer.from(memo, "utf8"),
   });
   // demo-grade: send a dust lamport to winner so they see *something* hit their wallet
   const dust = SystemProgram.transfer({
