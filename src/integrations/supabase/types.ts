@@ -127,6 +127,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mastodon_oauth_apps: {
+        Row: {
+          client_id: string
+          client_secret: string
+          created_at: string
+          id: string
+          instance: string
+          redirect_uri: string
+        }
+        Insert: {
+          client_id: string
+          client_secret: string
+          created_at?: string
+          id?: string
+          instance: string
+          redirect_uri: string
+        }
+        Update: {
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          id?: string
+          instance?: string
+          redirect_uri?: string
+        }
+        Relationships: []
+      }
       verification_log: {
         Row: {
           created_at: string
