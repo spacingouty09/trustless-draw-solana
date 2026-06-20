@@ -96,6 +96,7 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
     require_favourite: true,
     require_boost: true,
     require_follow: false,
+    follow_url: "",
     prize_token: "USDC",
     prize_total: 100,
     num_winners: 3,
@@ -104,6 +105,16 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
 
   const m = useMutation({
     mutationFn: async () => {
+      if (
+        !form.require_favourite &&
+        !form.require_boost &&
+        !form.require_follow
+      ) {
+        throw new Error("Pick at least one task for participants.");
+      }
+      if (form.require_follow && !form.follow_url.trim()) {
+        throw new Error("Add the page URL participants should follow.");
+      }
       const cutoff_ts = new Date(Date.now() + form.cutoff_hours * 3600 * 1000).toISOString();
       return create({
         data: {
@@ -154,22 +165,43 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
           value={form.description}
           onChange={(v) => setForm((f) => ({ ...f, description: v }))}
         />
-        <div className="grid grid-cols-3 gap-2">
-          <Toggle
-            label="Favourite"
-            on={form.require_favourite}
-            onChange={(v) => setForm((f) => ({ ...f, require_favourite: v }))}
-          />
-          <Toggle
-            label="Boost"
-            on={form.require_boost}
-            onChange={(v) => setForm((f) => ({ ...f, require_boost: v }))}
-          />
-          <Toggle
-            label="Follow"
-            on={form.require_follow}
-            onChange={(v) => setForm((f) => ({ ...f, require_follow: v }))}
-          />
+        <div className="rounded-lg border border-border/70 bg-background/40 p-3">
+          <div className="mb-2 text-xs text-muted-foreground">
+            Tasks participants must complete (pick at least one)
+          </div>
+          <div className="space-y-2">
+            <CheckRow
+              label="Like the post"
+              checked={form.require_favourite}
+              onChange={(v) => setForm((f) => ({ ...f, require_favourite: v }))}
+            />
+            <CheckRow
+              label="Share the post"
+              checked={form.require_boost}
+              onChange={(v) => setForm((f) => ({ ...f, require_boost: v }))}
+            />
+            <CheckRow
+              label="Follow page"
+              checked={form.require_follow}
+              onChange={(v) => setForm((f) => ({ ...f, require_follow: v }))}
+            />
+            {form.require_follow && (
+              <div className="pl-7">
+                <input
+                  type="url"
+                  placeholder="https://mastodon.social/@yourpage"
+                  value={form.follow_url}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, follow_url: e.target.value }))
+                  }
+                  className="block h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Page URL participants need to follow.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <TF
@@ -235,18 +267,37 @@ function TF({
   );
 }
 
-function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
+function CheckRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!on)}
-      className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
-        on
-          ? "border-primary/60 bg-primary/10 text-primary"
-          : "border-border bg-secondary/40 text-muted-foreground"
-      }`}
-    >
-      {label}
-    </button>
+    <label className="flex cursor-pointer items-center gap-3 rounded-md px-1 py-1 hover:bg-secondary/40">
+      <span
+        className={`grid h-5 w-5 place-items-center rounded border transition-colors ${
+          checked
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-background"
+        }`}
+      >
+        {checked && (
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M3 8.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="text-sm">{label}</span>
+    </label>
   );
 }
