@@ -7,15 +7,20 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ClientOnly } from "@/components/client-only";
-import { SolanaWalletProvider } from "@/components/wallet-provider";
 import { Toaster } from "@/components/ui/sonner";
+
+// Lazy so @solana/wallet-adapter-* is never pulled into the SSR bundle
+// (some transitive deps crash on Cloudflare Workers at module init).
+const SolanaWalletProvider = lazy(() =>
+  import("@/components/wallet-provider").then((m) => ({ default: m.SolanaWalletProvider })),
+);
 
 function NotFoundComponent() {
   return (
@@ -130,11 +135,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Wallet adapter is browser-only — mount under ClientOnly to avoid SSR window refs. */}
       <ClientOnly fallback={<AppShell><Outlet /></AppShell>}>
-        <SolanaWalletProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-        </SolanaWalletProvider>
+        <Suspense fallback={<AppShell><Outlet /></AppShell>}>
+          <SolanaWalletProvider>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          </SolanaWalletProvider>
+        </Suspense>
       </ClientOnly>
       <Toaster theme="dark" richColors />
     </QueryClientProvider>
