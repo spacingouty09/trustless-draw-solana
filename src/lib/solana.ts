@@ -23,7 +23,12 @@ async function loadWeb3() {
   return { Buffer, ...web3 };
 }
 
-export const DEVNET_RPC = "https://api.devnet.solana.com";
+// Public devnet RPC is heavily rate-limited (HTTP 429). Set
+// VITE_SOLANA_RPC in .env to a dedicated devnet endpoint (Helius,
+// QuickNode, Triton, Ankr…) for anything beyond the lightest demo use.
+export const DEVNET_RPC: string =
+  (import.meta as { env?: Record<string, string | undefined> }).env
+    ?.VITE_SOLANA_RPC || "https://api.devnet.solana.com";
 
 const MEMO_PROGRAM_ID_STR = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
