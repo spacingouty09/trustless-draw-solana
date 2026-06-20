@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizerIndexRouteImport } from './routes/organizer.index'
 import { Route as OrganizerIdRouteImport } from './routes/organizer.$id'
 import { Route as EventIdRouteImport } from './routes/event.$id'
+import { Route as ApiPublicMastodonCallbackRouteImport } from './routes/api/public/mastodon/callback'
 
 const OrganizerRoute = OrganizerRouteImport.update({
   id: '/organizer',
@@ -40,6 +41,12 @@ const EventIdRoute = EventIdRouteImport.update({
   path: '/event/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMastodonCallbackRoute =
+  ApiPublicMastodonCallbackRouteImport.update({
+    id: '/api/public/mastodon/callback',
+    path: '/api/public/mastodon/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,12 +54,14 @@ export interface FileRoutesByFullPath {
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
+  '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer': typeof OrganizerIndexRoute
+  '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,6 +70,7 @@ export interface FileRoutesById {
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
+  '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -70,8 +80,14 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
+    | '/api/public/mastodon/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/event/$id' | '/organizer/$id' | '/organizer'
+  to:
+    | '/'
+    | '/event/$id'
+    | '/organizer/$id'
+    | '/organizer'
+    | '/api/public/mastodon/callback'
   id:
     | '__root__'
     | '/'
@@ -79,12 +95,14 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
+    | '/api/public/mastodon/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrganizerRoute: typeof OrganizerRouteWithChildren
   EventIdRoute: typeof EventIdRoute
+  ApiPublicMastodonCallbackRoute: typeof ApiPublicMastodonCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -124,6 +142,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mastodon/callback': {
+      id: '/api/public/mastodon/callback'
+      path: '/api/public/mastodon/callback'
+      fullPath: '/api/public/mastodon/callback'
+      preLoaderRoute: typeof ApiPublicMastodonCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -145,6 +170,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrganizerRoute: OrganizerRouteWithChildren,
   EventIdRoute: EventIdRoute,
+  ApiPublicMastodonCallbackRoute: ApiPublicMastodonCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

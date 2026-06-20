@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 const schema = z.object({
   event_id: z.string().uuid(),
-  handle: z.string().min(2).max(120),
   wallet: z.string().min(32).max(64),
 });
 
@@ -22,6 +22,23 @@ export const joinEvent = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const m = await import("./mastodon.server");
+    const { parseCookies, verifyPayload, COOKIE_NAMES } = await import("./mastodon-auth.server");
+
+    // Identity comes from the signed Mastodon session cookie — never trust a
+    // client-supplied handle.
+    const cookies = parseCookies(getRequestHeader("cookie"));
+    const sessionToken = cookies[COOKIE_NAMES.session];
+    const session = sessionToken
+      ? await verifyPayload<{ handle: string; instance: string; username: string }>(sessionToken)
+      : null;
+    if (!session) {
+      return {
+        ok: false as const,
+        retry: false as const,
+        missing: [] as string[],
+        message: "Please sign in with Mastodon to enter.",
+      };
+    }
 
     const { data: ev, error } = await supabaseAdmin
       .from("events")
@@ -33,7 +50,15 @@ export const joinEvent = createServerFn({ method: "POST" })
     if (new Date(ev.cutoff_ts).getTime() < Date.now())
       throw new Error("Entry window has closed");
 
-    const handle = data.handle.trim().replace(/^@/, "");
+    if (session.instance.toLowerCase() !== ev.mastodon_instance.toLowerCase()) {
+      return {
+        ok: false as const,
+        retry: false as const,
+        missing: [] as string[],
+        message: `Please sign in on ${ev.mastodon_instance} to enter this giveaway.`,
+      };
+    }
+    const handle = session.handle.trim().replace(/^@/, "");
     const handleHash = await sha256Hex(handle);
 
     // duplicate check (DB also enforces unique constraint)
