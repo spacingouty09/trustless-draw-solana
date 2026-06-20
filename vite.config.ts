@@ -23,7 +23,12 @@ const rpcWebsocketsSsrShim = {
   },
   load(id: string) {
     if (id !== "\0virtual:rpc-websockets-stub") return null;
-    return "export class Client {}\nexport class CommonClient {}\nexport default {};\n";
+    return [
+      "export class Client {}",
+      "export class CommonClient {}",
+      "export const WebSocket = class {};",
+      "export default {};",
+    ].join("\n");
   },
 };
 
