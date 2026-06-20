@@ -89,10 +89,20 @@ export async function getFollowers(instance: string, accountId: string) {
 
 export function matchesHandle(target: string, account: PagedAccount, targetInstance: string) {
   const t = target.toLowerCase().replace(/^@/, "");
+  const [tUser, tInstance] = t.split("@");
   const localAcct = account.acct.toLowerCase();
-  // remote engagers come back as user@remote, locals come back as just "user"
+  const accInstance = (account as { acct: string }).acct.includes("@")
+    ? localAcct.split("@")[1]
+    : targetInstance.toLowerCase();
+  const accUser = localAcct.split("@")[0];
+  // exact match (handles "user@remote" === "user@remote")
   if (localAcct === t) return true;
-  if (localAcct === `${t.split("@")[0]}@${targetInstance.toLowerCase()}`) return true;
+  // target has instance; account is local on that same instance (returned as bare "user")
+  if (tInstance && tInstance === targetInstance.toLowerCase() && localAcct === tUser) return true;
+  // target has no instance — assume same instance as the post
+  if (!tInstance && localAcct === tUser) return true;
+  // both normalised to user+instance form
+  if (tInstance && accUser === tUser && accInstance === tInstance) return true;
   return false;
 }
 
