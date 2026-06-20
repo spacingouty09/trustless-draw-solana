@@ -1,26 +1,34 @@
 // Browser-side Solana helpers. Devnet only.
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
+// NOTE: @solana/web3.js pulls in `rpc-websockets`, which has no `workerd`
+// export condition and breaks the Cloudflare Worker SSR build. We therefore
+// lazy-import it inside async functions so the module graph stays clean for
+// the worker bundle. Pure helpers (explorerTx, shortAddr) carry no runtime
+// dep on web3.js and remain safe to import anywhere.
+import type {
+  PublicKey as PublicKeyT,
+  Transaction as TransactionT,
 } from "@solana/web3.js";
-import { Buffer } from "buffer";
 
-// Ensure Buffer exists on window for web3.js
-if (typeof globalThis !== "undefined" && !(globalThis as { Buffer?: unknown }).Buffer) {
-  (globalThis as { Buffer?: unknown }).Buffer = Buffer;
+async function loadWeb3() {
+  const [{ Buffer }, web3] = await Promise.all([
+    import("buffer"),
+    import("@solana/web3.js"),
+  ]);
+  if (
+    typeof globalThis !== "undefined" &&
+    !(globalThis as { Buffer?: unknown }).Buffer
+  ) {
+    (globalThis as { Buffer?: unknown }).Buffer = Buffer;
+  }
+  return { Buffer, ...web3 };
 }
 
 export const DEVNET_RPC = "https://api.devnet.solana.com";
 
-const MEMO_PROGRAM_ID = new PublicKey(
-  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
-);
+const MEMO_PROGRAM_ID_STR = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
-export function getConnection() {
+export async function getConnection() {
+  const { Connection } = await loadWeb3();
   return new Connection(DEVNET_RPC, "confirmed");
 }
 
@@ -33,17 +41,26 @@ export function getConnection() {
  * the audited program SDK is integrated.
  */
 export async function sendCommitMemo(args: {
-  payer: PublicKey;
-  signTransaction: (tx: Transaction) => Promise<Transaction>;
+  payer: PublicKeyT;
+  signTransaction: (tx: TransactionT) => Promise<TransactionT>;
   campaignId: string;
   amount: number;
   token: string;
 }): Promise<string> {
-  const connection = getConnection();
+  const {
+    Connection,
+    PublicKey,
+    Transaction,
+    TransactionInstruction,
+    SystemProgram,
+    LAMPORTS_PER_SOL,
+    Buffer,
+  } = await loadWeb3();
+  const connection = new Connection(DEVNET_RPC, "confirmed");
   const memo = `chaindraw:commit:${args.campaignId}:${args.amount}:${args.token}`;
   const ix = new TransactionInstruction({
     keys: [{ pubkey: args.payer, isSigner: true, isWritable: true }],
-    programId: MEMO_PROGRAM_ID,
+    programId: new PublicKey(MEMO_PROGRAM_ID_STR),
     data: Buffer.from(memo, "utf8"),
   });
   // dust self-transfer to ensure the tx is non-trivial
@@ -63,17 +80,26 @@ export async function sendCommitMemo(args: {
 }
 
 export async function sendPayoutMemo(args: {
-  payer: PublicKey;
-  signTransaction: (tx: Transaction) => Promise<Transaction>;
+  payer: PublicKeyT;
+  signTransaction: (tx: TransactionT) => Promise<TransactionT>;
   campaignId: string;
   winnerWallet: string;
   share: number;
 }): Promise<string> {
-  const connection = getConnection();
+  const {
+    Connection,
+    PublicKey,
+    Transaction,
+    TransactionInstruction,
+    SystemProgram,
+    LAMPORTS_PER_SOL,
+    Buffer,
+  } = await loadWeb3();
+  const connection = new Connection(DEVNET_RPC, "confirmed");
   const memo = `chaindraw:payout:${args.campaignId}:${args.winnerWallet}:${args.share}`;
   const ix = new TransactionInstruction({
     keys: [{ pubkey: args.payer, isSigner: true, isWritable: true }],
-    programId: MEMO_PROGRAM_ID,
+    programId: new PublicKey(MEMO_PROGRAM_ID_STR),
     data: Buffer.from(memo, "utf8"),
   });
   // demo-grade: send a dust lamport to winner so they see *something* hit their wallet
@@ -107,7 +133,9 @@ export function shortAddr(addr: string) {
 
 export async function getSolBalance(address: string) {
   try {
-    const lamports = await getConnection().getBalance(new PublicKey(address));
+    const { Connection, PublicKey, LAMPORTS_PER_SOL } = await loadWeb3();
+    const connection = new Connection(DEVNET_RPC, "confirmed");
+    const lamports = await connection.getBalance(new PublicKey(address));
     return lamports / LAMPORTS_PER_SOL;
   } catch {
     return null;
