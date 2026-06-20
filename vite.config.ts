@@ -12,4 +12,16 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    resolve: {
+      alias: {
+        // `rpc-websockets` (pulled in by @solana/web3.js → wallet adapters) only
+        // exports `browser` / `node` conditions, so the Cloudflare `workerd`
+        // resolver throws at build time. The wallet stack is gated behind
+        // <ClientOnly>, so the SSR worker never actually runs this code —
+        // we just need a resolvable module specifier for the bundler.
+        "rpc-websockets": "rpc-websockets/dist/index.browser.mjs",
+      },
+    },
+  },
 });
