@@ -6,28 +6,60 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// `rpc-websockets` (pulled in by @solana/web3.js → wallet adapters) only
-// declares `browser` / `node` export conditions, so Cloudflare's `workerd`
-// resolver hard-fails at build time. The wallet stack is gated behind
-// <ClientOnly> so the SSR worker never executes this code; we just need a
-// resolvable module for the bundler in the SSR/worker env. The client env
-// keeps the real `rpc-websockets` (browser build) untouched.
-const rpcWebsocketsSsrShim = {
-  name: "chaindraw:rpc-websockets-ssr-shim",
+// The whole Solana wallet stack (@solana/web3.js, @solana/wallet-adapter-*,
+// rpc-websockets) only runs in the browser — gated behind <ClientOnly> and
+// dynamic imports in event handlers. But Cloudflare's `workerd` resolver
+// hard-fails on rpc-websockets (no `workerd` export condition) and a
+// transitive dep does `util.inherits(X, undefined)` during worker module init
+// when web3.js gets pulled in. We stub the entire chain in the SSR/worker
+// env so the worker bundle stays clean. The client env keeps the real
+// packages untouched.
+const SSR_STUBBED_MODULES = new Set([
+  "rpc-websockets",
+  "@solana/web3.js",
+  "@solana/wallet-adapter-react",
+  "@solana/wallet-adapter-base",
+  "@solana/wallet-adapter-phantom",
+  "@solana/wallet-adapter-solflare",
+]);
+const STUB_VIRTUAL_ID = "\0virtual:solana-ssr-stub";
+const solanaSsrShim = {
+  name: "chaindraw:solana-ssr-shim",
   enforce: "pre" as const,
   resolveId(this: { environment?: { name?: string } }, id: string) {
-    if (id !== "rpc-websockets") return null;
     const envName = this.environment?.name;
     if (envName === "client") return null;
-    return { id: "\0virtual:rpc-websockets-stub", moduleSideEffects: false };
+    // Match exact pkg or any subpath of stubbed pkgs.
+    const base = id.startsWith("@")
+      ? id.split("/").slice(0, 2).join("/")
+      : id.split("/")[0];
+    if (!SSR_STUBBED_MODULES.has(base)) return null;
+    return { id: STUB_VIRTUAL_ID, moduleSideEffects: false };
   },
   load(id: string) {
-    if (id !== "\0virtual:rpc-websockets-stub") return null;
+    if (id !== STUB_VIRTUAL_ID) return null;
+    // Proxy returns a no-op class/function for any property access, so
+    // `import { Anything } from "<stubbed>"` resolves to a safe sentinel.
     return [
-      "export class Client {}",
-      "export class CommonClient {}",
-      "export const WebSocket = class {};",
-      "export default {};",
+      "const noop = function () {};",
+      "noop.prototype = {};",
+      "const handler = { get: (_t, prop) => prop === '__esModule' ? true : noop };",
+      "const stub = new Proxy(noop, handler);",
+      "export default stub;",
+      "export { stub as Client, stub as CommonClient, stub as WebSocket };",
+      "export const __isSsrStub = true;",
+      // Re-export the proxy itself as a star fallback for unknown named imports.
+      "export const Connection = stub;",
+      "export const PublicKey = stub;",
+      "export const Transaction = stub;",
+      "export const SystemProgram = stub;",
+      "export const LAMPORTS_PER_SOL = 0;",
+      "export const useWallet = () => ({ publicKey: null, connected: false, signTransaction: null });",
+      "export const useConnection = () => ({ connection: null });",
+      "export const ConnectionProvider = ({ children }) => children;",
+      "export const WalletProvider = ({ children }) => children;",
+      "export const PhantomWalletAdapter = noop;",
+      "export const SolflareWalletAdapter = noop;",
     ].join("\n");
   },
 };
@@ -39,6 +71,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [rpcWebsocketsSsrShim],
+    plugins: [solanaSsrShim],
   },
 });
