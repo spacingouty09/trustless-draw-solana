@@ -3,7 +3,7 @@
 // so that knowing the public organizer_pubkey is not enough to call privileged
 // server functions — the caller must also control the matching private key.
 
-import { ed25519 } from "@noble/curves/ed25519";
+import { ed25519 } from "@noble/curves/ed25519.js";
 import bs58 from "bs58";
 
 const MAX_SKEW_MS = 5 * 60 * 1000; // 5 minutes
