@@ -10,6 +10,7 @@ import { PrizePoolPanel } from "@/components/prize-pool-panel";
 import { WinnersPanel } from "@/components/winners-panel";
 import { Countdown } from "@/components/countdown";
 import { sendCommitMemo, sendPayoutMemo, explorerTx, shortAddr } from "@/lib/solana";
+import { signWalletAction } from "@/lib/wallet-auth";
 
 export function OrganizerManageClient({ id }: { id: string }) {
   const wallet = useWallet();
@@ -99,7 +100,7 @@ function CommitCard({
   token: string;
   onDone: () => void;
 }) {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, signMessage } = useWallet();
   const commit = useServerFn(commitPool);
   const [loading, setLoading] = useState(false);
 
@@ -113,9 +114,9 @@ function CommitCard({
         commitment. Anyone can verify on Explorer.
       </p>
       <button
-        disabled={!publicKey || !signTransaction || loading}
+        disabled={!publicKey || !signTransaction || !signMessage || loading}
         onClick={async () => {
-          if (!publicKey || !signTransaction) return;
+          if (!publicKey || !signTransaction || !signMessage) return;
           try {
             setLoading(true);
             const sig = await sendCommitMemo({
@@ -125,7 +126,13 @@ function CommitCard({
               amount: total,
               token,
             });
-            await commit({ data: { id: eventId, commit_tx: sig, delegation_pda: sig } });
+            const auth = await signWalletAction({
+              signMessage,
+              pubkey: publicKey.toBase58(),
+              action: "commit",
+              eventId,
+            });
+            await commit({ data: { id: eventId, commit_tx: sig, delegation_pda: sig, auth } });
             toast.success("Prize pool committed on-chain");
             onDone();
           } catch (e) {
@@ -157,9 +164,21 @@ function DrawCard({
   entriesCount: number;
   onDone: () => void;
 }) {
+  const { publicKey, signMessage } = useWallet();
   const draw = useServerFn(drawAndPay);
   const m = useMutation({
-    mutationFn: () => draw({ data: { id: eventId, organizer_pubkey: organizer } }),
+    mutationFn: async () => {
+      if (!publicKey || !signMessage) throw new Error("Connect your wallet first");
+      if (publicKey.toBase58() !== organizer)
+        throw new Error("Connect the organizer wallet to draw");
+      const auth = await signWalletAction({
+        signMessage,
+        pubkey: publicKey.toBase58(),
+        action: "draw",
+        eventId,
+      });
+      return draw({ data: { id: eventId, auth } });
+    },
     onSuccess: (r) => {
       if (!r.ok) {
         toast.error(r.message);
@@ -181,7 +200,7 @@ function DrawCard({
       </p>
       <button
         onClick={() => m.mutate()}
-        disabled={m.isPending}
+        disabled={m.isPending || !publicKey || !signMessage}
         className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-gradient-brand font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
       >
         {m.isPending ? "Drawing…" : "Draw winners"}
@@ -201,7 +220,7 @@ function PayoutCard({
   entries: Array<{ id: string; wallet: string; handle: string }>;
   onDone: () => void;
 }) {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, signMessage } = useWallet();
   const record = useServerFn(recordPayout);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const byEntry = new Map(entries.map((e) => [e.id, e]));
@@ -235,9 +254,9 @@ function PayoutCard({
                 </a>
               ) : (
                 <button
-                  disabled={!publicKey || !signTransaction || loadingId === w.id}
+                  disabled={!publicKey || !signTransaction || !signMessage || loadingId === w.id}
                   onClick={async () => {
-                    if (!publicKey || !signTransaction) return;
+                    if (!publicKey || !signTransaction || !signMessage) return;
                     try {
                       setLoadingId(w.id);
                       const sig = await sendPayoutMemo({
@@ -247,7 +266,13 @@ function PayoutCard({
                         winnerWallet: e.wallet,
                         share: Number(w.share),
                       });
-                      await record({ data: { winner_id: w.id, payout_tx: sig } });
+                      const auth = await signWalletAction({
+                        signMessage,
+                        pubkey: publicKey.toBase58(),
+                        action: "payout",
+                        eventId: event.id,
+                      });
+                      await record({ data: { winner_id: w.id, payout_tx: sig, auth } });
                       toast.success(`Paid @${e.handle}`);
                       onDone();
                     } catch (err) {
