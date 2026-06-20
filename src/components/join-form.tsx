@@ -7,19 +7,29 @@ import { joinEvent } from "@/lib/join.functions";
 export function JoinForm({ eventId }: { eventId: string }) {
   const [handle, setHandle] = useState("");
   const [wallet, setWallet] = useState("");
+  const [retryNotice, setRetryNotice] = useState<{ message: string; missing: string[] } | null>(null);
   const join = useServerFn(joinEvent);
   const qc = useQueryClient();
   const m = useMutation({
     mutationFn: (vars: { handle: string; wallet: string }) =>
       join({ data: { event_id: eventId, ...vars } }),
     onSuccess: (res) => {
-      toast.success(`Verified ✓ — you're entry #${res.entry.index + 1}`);
-      setHandle("");
-      setWallet("");
-      qc.invalidateQueries({ queryKey: ["event", eventId] });
+      if (res.ok) {
+        toast.success(`Verified ✓ — you're entry #${res.entry.index + 1}`);
+        setHandle("");
+        setWallet("");
+        setRetryNotice(null);
+        qc.invalidateQueries({ queryKey: ["event", eventId] });
+      } else {
+        setRetryNotice({ message: res.message, missing: res.missing });
+        toast.warning(res.message);
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const updateHandle = (v: string) => { setHandle(v); setRetryNotice(null); };
+  const updateWallet = (v: string) => { setWallet(v); setRetryNotice(null); };
 
   return (
     <form
@@ -34,9 +44,22 @@ export function JoinForm({ eventId }: { eventId: string }) {
         Participants don't sign or pay. We push the prize to your wallet if you win.
       </p>
       <div className="mt-4 space-y-3">
-        <Field label="Your Mastodon handle" placeholder="user@mastodon.social" value={handle} onChange={setHandle} />
-        <Field label="Your Solana wallet (devnet)" placeholder="A Solana pubkey" value={wallet} onChange={setWallet} mono />
+        <Field label="Your Mastodon handle" placeholder="user@mastodon.social" value={handle} onChange={updateHandle} />
+        <Field label="Your Solana wallet (devnet)" placeholder="A Solana pubkey" value={wallet} onChange={updateWallet} mono />
       </div>
+      {retryNotice && (
+        <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
+          <p>{retryNotice.message}</p>
+          <button
+            type="button"
+            onClick={() => m.mutate({ handle, wallet })}
+            disabled={m.isPending || !handle || !wallet}
+            className="mt-2 inline-flex h-8 items-center justify-center rounded-md border border-amber-400/50 px-3 text-xs font-medium text-amber-100 transition hover:bg-amber-500/20 disabled:opacity-40"
+          >
+            {m.isPending ? "Re-checking…" : "Try again"}
+          </button>
+        </div>
+      )}
       <button
         type="submit"
         disabled={m.isPending || !handle || !wallet}

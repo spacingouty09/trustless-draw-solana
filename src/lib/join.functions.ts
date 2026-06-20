@@ -82,9 +82,12 @@ export const joinEvent = createServerFn({ method: "POST" })
         result: "failed",
         detail: { missing: failures },
       });
-      throw new Error(
-        `Couldn't verify yet — missing: ${failures.join(", ")}. Federation can lag a few seconds; try again shortly.`,
-      );
+      return {
+        ok: false as const,
+        retry: true as const,
+        missing: failures,
+        message: `Couldn't verify yet — missing: ${failures.join(", ")}. Federation can lag a few seconds; try again shortly.`,
+      };
     }
 
     // Get next index
@@ -114,5 +117,5 @@ export const joinEvent = createServerFn({ method: "POST" })
       detail: { index: nextIndex },
     });
 
-    return { entry: row };
+    return { ok: true as const, entry: row };
   });
