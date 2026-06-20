@@ -95,6 +95,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ChainDraw — Trustless social giveaways on Solana" },
+      { name: "description", content: "Trustless social giveaways on Solana. Organizers commit prizes on-chain," },
+      { property: "og:description", content: "Trustless social giveaways on Solana. Organizers commit prizes on-chain," },
+      { name: "twitter:description", content: "Trustless social giveaways on Solana. Organizers commit prizes on-chain," },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/50d3f300-11e4-4f12-a67c-91b0824a2e76/id-preview-39c79c33--53a6ec9e-5a9d-4ee5-b579-042e329c46db.lovable.app-1781941693454.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/50d3f300-11e4-4f12-a67c-91b0824a2e76/id-preview-39c79c33--53a6ec9e-5a9d-4ee5-b579-042e329c46db.lovable.app-1781941693454.png" },
     ],
     links: [
       {
