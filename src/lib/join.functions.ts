@@ -54,7 +54,16 @@ export const joinEvent = createServerFn({ method: "POST" })
     }
     if (ev.require_boost) {
       const boosts = await m.getReblogged(ev.mastodon_instance, ev.mastodon_status_id);
-      if (!boosts.some((a) => m.matchesHandle(handle, a, ev.mastodon_instance)))
+      const foundBoost = boosts.some((a) => m.matchesHandle(handle, a, ev.mastodon_instance));
+      const foundTimelineBoost = foundBoost
+        ? true
+        : await m.hasBoostedStatus(
+            ev.mastodon_instance,
+            ev.mastodon_status_id,
+            ev.mastodon_status_url,
+            handle,
+          );
+      if (!foundTimelineBoost)
         failures.push("Boost the post");
     }
     if (ev.require_follow && ev.mastodon_account_id) {
