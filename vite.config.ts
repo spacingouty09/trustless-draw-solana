@@ -13,14 +13,18 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    resolve: {
-      alias: {
-        // `rpc-websockets` (pulled in by @solana/web3.js → wallet adapters) only
-        // exports `browser` / `node` conditions, so the Cloudflare `workerd`
-        // resolver throws at build time. The wallet stack is gated behind
-        // <ClientOnly>, so the SSR worker never actually runs this code —
-        // we just need a resolvable module specifier for the bundler.
-        "rpc-websockets": "rpc-websockets/dist/index.browser.mjs",
+    environments: {
+      // `rpc-websockets` (pulled in by @solana/web3.js → wallet adapters) only
+      // declares `browser` / `node` export conditions, so Cloudflare's
+      // `workerd` resolver hard-fails at build time. The wallet stack is
+      // gated behind <ClientOnly> so the SSR worker never executes this code;
+      // we just need a resolvable specifier for the bundler in the worker env.
+      ssr: {
+        resolve: {
+          alias: {
+            "rpc-websockets": "rpc-websockets/dist/index.browser.mjs",
+          },
+        },
       },
     },
   },
