@@ -11,7 +11,6 @@ export const Route = createFileRoute("/api/public/mastodon/callback")({
         const secure = url.protocol === "https:";
 
         const {
-          parseCookies,
           verifyPayload,
           signPayload,
           buildCookie,
@@ -35,10 +34,6 @@ export const Route = createFileRoute("/api/public/mastodon/callback")({
 
         if (error) return fail(`Mastodon returned: ${error}`);
         if (!code || !stateParam) return fail("Missing code or state.");
-
-        const cookies = parseCookies(request.headers.get("cookie"));
-        const stateCookie = cookies[COOKIE_NAMES.state];
-        if (!stateCookie || stateCookie !== stateParam) return fail("State mismatch — please try signing in again.");
 
         const state = await verifyPayload<{
           event_id: string;
@@ -67,7 +62,6 @@ export const Route = createFileRoute("/api/public/mastodon/callback")({
 
           const headers = new Headers({ Location: `/event/${state.event_id}` });
           headers.append("Set-Cookie", buildCookie(COOKIE_NAMES.session, session, { maxAge: TTL.session, secure }));
-          headers.append("Set-Cookie", clearCookie(COOKIE_NAMES.state, secure));
           return new Response(null, { status: 302, headers });
         } catch (e) {
           console.error("[mastodon callback]", e);

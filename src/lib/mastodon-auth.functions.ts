@@ -4,12 +4,10 @@ import { z } from "zod";
 export const startMastodonLogin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
-    const { getRequest, setResponseHeader } = await import("@tanstack/react-start/server");
+    const { getRequest } = await import("@tanstack/react-start/server");
     const {
       ensureOauthApp,
       signPayload,
-      buildCookie,
-      COOKIE_NAMES,
       TTL,
     } = await import("./mastodon-auth.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -30,7 +28,6 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
         ? `${fwdProto}://${fwdHost}`
         : reqUrl.origin;
     const redirectUri = `${origin}/api/public/mastodon/callback`;
-    const secure = origin.startsWith("https:");
 
     const app = await ensureOauthApp(ev.mastodon_instance, redirectUri);
 
@@ -38,10 +35,6 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
     const state = await signPayload(
       { event_id: ev.id, instance: ev.mastodon_instance, nonce, redirect_uri: redirectUri },
       TTL.state,
-    );
-    setResponseHeader(
-      "Set-Cookie",
-      buildCookie(COOKIE_NAMES.state, state, { maxAge: TTL.state, secure }),
     );
 
     const authorizeUrl = new URL(`https://${ev.mastodon_instance}/oauth/authorize`);
