@@ -161,6 +161,10 @@ function DrawCard({
   const m = useMutation({
     mutationFn: () => draw({ data: { id: eventId, organizer_pubkey: organizer } }),
     onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.message);
+        return;
+      }
       toast.success(`Drew ${r.numWinners} winner(s). Seed ${r.seedHex.slice(0, 10)}…`);
       onDone();
     },
