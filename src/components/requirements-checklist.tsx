@@ -2,11 +2,11 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export function RequirementsChecklist({ event }: { event: Tables<"events"> }) {
   const items: Array<{ label: string; href: string }> = [];
-  if (event.require_favourite) items.push({ label: "Favourite the post", href: event.mastodon_status_url });
-  if (event.require_boost) items.push({ label: "Boost the post", href: event.mastodon_status_url });
+  if (event.require_favourite) items.push({ label: "Like the post", href: event.mastodon_status_url });
+  if (event.require_boost) items.push({ label: "Share the post", href: event.mastodon_status_url });
   if (event.require_follow)
     items.push({
-      label: `Follow @${event.mastodon_account_acct}`,
+      label: `Follow page @${event.mastodon_account_acct}`,
       href: `https://${event.mastodon_instance}/@${event.mastodon_account_acct}`,
     });
   return (
