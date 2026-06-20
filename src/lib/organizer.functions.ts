@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const authSchema = z.object({
+  pubkey: z.string().min(32),
+  signature: z.string().min(40),
+  issued_at: z.string(),
+});
+
 const createSchema = z.object({
   organizer_pubkey: z.string().min(32),
   title: z.string().min(2).max(140),
