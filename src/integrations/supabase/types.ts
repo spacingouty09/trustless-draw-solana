@@ -14,7 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      entries: {
+        Row: {
+          created_at: string
+          event_id: string
+          handle: string
+          handle_hash: string
+          id: string
+          index: number
+          wallet: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          handle: string
+          handle_hash: string
+          id?: string
+          index: number
+          wallet: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          handle?: string
+          handle_hash?: string
+          id?: string
+          index?: number
+          wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          commit_tx: string | null
+          created_at: string
+          cutoff_ts: string
+          delegation_pda: string | null
+          description: string
+          draw_seed: string | null
+          id: string
+          mastodon_account_acct: string
+          mastodon_account_id: string | null
+          mastodon_instance: string
+          mastodon_status_id: string
+          mastodon_status_url: string
+          num_winners: number
+          organizer_pubkey: string
+          prize_token: string
+          prize_total: number
+          require_boost: boolean
+          require_favourite: boolean
+          require_follow: boolean
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          commit_tx?: string | null
+          created_at?: string
+          cutoff_ts: string
+          delegation_pda?: string | null
+          description?: string
+          draw_seed?: string | null
+          id?: string
+          mastodon_account_acct: string
+          mastodon_account_id?: string | null
+          mastodon_instance: string
+          mastodon_status_id: string
+          mastodon_status_url: string
+          num_winners?: number
+          organizer_pubkey: string
+          prize_token?: string
+          prize_total: number
+          require_boost?: boolean
+          require_favourite?: boolean
+          require_follow?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          commit_tx?: string | null
+          created_at?: string
+          cutoff_ts?: string
+          delegation_pda?: string | null
+          description?: string
+          draw_seed?: string | null
+          id?: string
+          mastodon_account_acct?: string
+          mastodon_account_id?: string | null
+          mastodon_instance?: string
+          mastodon_status_id?: string
+          mastodon_status_url?: string
+          num_winners?: number
+          organizer_pubkey?: string
+          prize_token?: string
+          prize_total?: number
+          require_boost?: boolean
+          require_favourite?: boolean
+          require_follow?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      verification_log: {
+        Row: {
+          created_at: string
+          detail: Json
+          event_id: string
+          handle: string
+          id: string
+          result: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          event_id: string
+          handle: string
+          id?: string
+          result: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          event_id?: string
+          handle?: string
+          id?: string
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winners: {
+        Row: {
+          created_at: string
+          entry_id: string
+          event_id: string
+          id: string
+          payout_tx: string | null
+          share: number
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          event_id: string
+          id?: string
+          payout_tx?: string | null
+          share: number
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          event_id?: string
+          id?: string
+          payout_tx?: string | null
+          share?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winners_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winners_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
