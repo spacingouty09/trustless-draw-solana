@@ -31,6 +31,19 @@ export function JoinForm({ eventId }: { eventId: string }) {
   const loginMutation = useMutation({
     mutationFn: () => startLogin({ data: { event_id: eventId } }),
     onSuccess: ({ authorize_url }) => {
+      // Mastodon instances send X-Frame-Options: DENY, so we can't navigate
+      // the Lovable preview iframe to the authorize URL. Break out to the
+      // top-level window when we're inside an iframe.
+      try {
+        if (window.top && window.top !== window.self) {
+          window.top.location.href = authorize_url;
+          return;
+        }
+      } catch {
+        // Cross-origin top — fall back to opening in a new tab.
+        window.open(authorize_url, "_blank", "noopener");
+        return;
+      }
       window.location.href = authorize_url;
     },
     onError: (e: Error) => toast.error(e.message),

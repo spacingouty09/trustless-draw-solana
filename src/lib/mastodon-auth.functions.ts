@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest, setResponseHeader, getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 export const startMastodonLogin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    const { getRequest, setResponseHeader } = await import("@tanstack/react-start/server");
     const {
       ensureOauthApp,
       signPayload,
@@ -49,6 +49,7 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
   });
 
 export const getMastodonSession = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequestHeader } = await import("@tanstack/react-start/server");
   const { parseCookies, verifyPayload, COOKIE_NAMES } = await import("./mastodon-auth.server");
   const cookies = parseCookies(getRequestHeader("cookie"));
   const token = cookies[COOKIE_NAMES.session];
@@ -63,6 +64,7 @@ export const getMastodonSession = createServerFn({ method: "GET" }).handler(asyn
 });
 
 export const signOutMastodon = createServerFn({ method: "POST" }).handler(async () => {
+  const { getRequest, setResponseHeader } = await import("@tanstack/react-start/server");
   const { clearCookie, COOKIE_NAMES } = await import("./mastodon-auth.server");
   const req = getRequest();
   const secure = new URL(req.url).protocol === "https:";
