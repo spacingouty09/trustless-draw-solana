@@ -11,6 +11,11 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { ClientOnly } from "@/components/client-only";
+import { SolanaWalletProvider } from "@/components/wallet-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,14 +82,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "ChainDraw — Trustless social giveaways on Solana" },
+      {
+        name: "description",
+        content:
+          "Brands commit prizes on-chain. We verify entries from Mastodon and push payouts to winners. No escrow, no trust required.",
+      },
+      { property: "og:title", content: "ChainDraw — Trustless social giveaways on Solana" },
+      {
+        property: "og:description",
+        content: "Commit prizes on-chain. Verify entries from Mastodon. Auto-pay winners.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       {
@@ -118,8 +128,25 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {/* Wallet adapter is browser-only — mount under ClientOnly to avoid SSR window refs. */}
+      <ClientOnly fallback={<AppShell><Outlet /></AppShell>}>
+        <SolanaWalletProvider>
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        </SolanaWalletProvider>
+      </ClientOnly>
+      <Toaster theme="dark" richColors />
     </QueryClientProvider>
+  );
+}
+
+function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </div>
   );
 }
