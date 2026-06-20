@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -20,6 +19,7 @@ async function sha256Hex(input: string) {
 export const joinEvent = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }) => {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const m = await import("./mastodon.server");
     const { parseCookies, verifyPayload, COOKIE_NAMES } = await import("./mastodon-auth.server");
