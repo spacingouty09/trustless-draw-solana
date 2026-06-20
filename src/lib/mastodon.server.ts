@@ -3,6 +3,7 @@
 export type MastodonStatus = {
   id: string;
   url: string;
+  uri?: string;
   account: { id: string; acct: string; username: string };
   instance: string;
 };
@@ -27,6 +28,7 @@ export async function resolveStatus(statusUrl: string): Promise<MastodonStatus> 
   const data = (await res.json()) as {
     id: string;
     url: string;
+    uri?: string;
     account: { id: string; acct: string; username: string };
   };
   return { ...data, instance };
@@ -42,6 +44,17 @@ export async function lookupAccount(instance: string, acct: string) {
 }
 
 type PagedAccount = { id: string; acct: string; username: string };
+
+type AccountStatus = {
+  id: string;
+  url?: string | null;
+  uri?: string | null;
+  reblog?: {
+    id: string;
+    url?: string | null;
+    uri?: string | null;
+  } | null;
+};
 
 async function fetchAllPaginated(url: string, maxPages = 8): Promise<PagedAccount[]> {
   const out: PagedAccount[] = [];
@@ -79,6 +92,61 @@ export async function getReblogged(instance: string, statusId: string) {
   return fetchAllPaginated(
     `https://${instance}/api/v1/statuses/${statusId}/reblogged_by?limit=80`,
   );
+}
+
+function normalizeStatusRef(value: string | null | undefined) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    url.search = "";
+    return `${url.host.toLowerCase()}${url.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return value.toLowerCase().replace(/\/$/, "");
+  }
+}
+
+export async function hasBoostedStatus(
+  postInstance: string,
+  statusId: string,
+  statusUrl: string,
+  handle: string,
+) {
+  const cleanHandle = handle.toLowerCase().replace(/^@/, "");
+  const [, userInstance] = cleanHandle.split("@");
+  const instances = Array.from(new Set([postInstance.toLowerCase(), userInstance].filter(Boolean)));
+  const targetRefs = new Set([
+    statusId,
+    normalizeStatusRef(statusUrl),
+    normalizeStatusRef(`https://${postInstance}/statuses/${statusId}`),
+  ]);
+
+  for (const instance of instances) {
+    try {
+      const account = await lookupAccount(instance, cleanHandle);
+      const res = await fetch(
+        `https://${instance}/api/v1/accounts/${account.id}/statuses?limit=40&exclude_replies=true&exclude_reblogs=false`,
+        { headers: { Accept: "application/json" } },
+      );
+      if (!res.ok) continue;
+      const statuses = (await res.json()) as AccountStatus[];
+      if (
+        statuses.some((status) => {
+          const boosted = status.reblog;
+          if (!boosted) return false;
+          return [boosted.id, normalizeStatusRef(boosted.url), normalizeStatusRef(boosted.uri)].some((ref) =>
+            targetRefs.has(ref),
+          );
+        })
+      ) {
+        return true;
+      }
+    } catch {
+      // Some instances disable lookup/status endpoints for remote accounts; try the next public view.
+    }
+  }
+
+  return false;
 }
 
 export async function getFollowers(instance: string, accountId: string) {
