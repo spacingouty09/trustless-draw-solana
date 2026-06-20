@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { ClientOnly } from "./client-only";
-import { WalletButton } from "./wallet-button";
+
+const WalletButton = lazy(() =>
+  import("./wallet-button").then((m) => ({ default: m.WalletButton })),
+);
+
+function WalletButtonFallback() {
+  return <div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />;
+}
 
 export function SiteHeader() {
   return (
@@ -31,8 +39,10 @@ export function SiteHeader() {
           >
             Organizer
           </Link>
-          <ClientOnly fallback={<div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />}>
-            <WalletButton />
+          <ClientOnly fallback={<WalletButtonFallback />}>
+            <Suspense fallback={<WalletButtonFallback />}>
+              <WalletButton />
+            </Suspense>
           </ClientOnly>
         </nav>
       </div>
