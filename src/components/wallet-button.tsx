@@ -1,3 +1,4 @@
+import "@/lib/buffer-polyfill";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useState } from "react";
 import { shortAddr } from "@/lib/solana";
