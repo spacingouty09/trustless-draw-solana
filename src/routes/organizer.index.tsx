@@ -12,6 +12,11 @@ function OrganizerFallback() {
 
 export const Route = createFileRoute("/organizer/")({
   component: OrganizerHome,
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-2xl px-6 py-16 text-center text-destructive">
+      <p className="text-sm whitespace-pre-wrap">{error.message}</p>
+    </div>
+  ),
 });
 
 function OrganizerHome() {
