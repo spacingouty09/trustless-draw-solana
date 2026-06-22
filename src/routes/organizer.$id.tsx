@@ -12,6 +12,11 @@ function ManageFallback() {
 
 export const Route = createFileRoute("/organizer/$id")({
   component: ManageRoute,
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-2xl px-6 py-16 text-center text-destructive">
+      <p className="text-sm whitespace-pre-wrap">{error.message}</p>
+    </div>
+  ),
 });
 
 function ManageRoute() {
