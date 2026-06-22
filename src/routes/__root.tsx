@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ClientOnly } from "@/components/client-only";
+import { WalletErrorBoundary } from "@/components/wallet-error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 
 // Lazy so @solana/wallet-adapter-* is never pulled into the SSR bundle
@@ -136,11 +137,13 @@ function RootComponent() {
       {/* Wallet adapter is browser-only — mount under ClientOnly to avoid SSR window refs. */}
       <ClientOnly fallback={<AppShell><Outlet /></AppShell>}>
         <Suspense fallback={<AppShell><Outlet /></AppShell>}>
-          <SolanaWalletProvider>
-            <AppShell>
-              <Outlet />
-            </AppShell>
-          </SolanaWalletProvider>
+          <WalletErrorBoundary fallback={<AppShell><Outlet /></AppShell>}>
+            <SolanaWalletProvider>
+              <AppShell>
+                <Outlet />
+              </AppShell>
+            </SolanaWalletProvider>
+          </WalletErrorBoundary>
         </Suspense>
       </ClientOnly>
       <Toaster theme="dark" richColors />
