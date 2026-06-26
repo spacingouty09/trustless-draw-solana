@@ -1,43 +1,24 @@
-## Diagnosis
+## Why it loads in the Lovable preview but fails in a new tab
 
-The published worker logs show the real cause on every request (even `/favicon.ico`):
+The crash is the same on both: a Solana chunk runs `Buffer.from(...)` at module init and throws `Cannot read properties of undefined (reading 'from')` because `window.Buffer` isn't defined yet. The reason you only notice it when opening the URL directly:
 
-```
-TypeError [ERR_INVALID_ARG_TYPE]: The "superCtor.prototype" property must be of type object. Received undefined
-```
+- **Inside the Lovable editor**, the preview iframe is wrapped by Lovable's host page. The host injects helper scripts and an error overlay, and (most importantly) it warms the page with extra runtime shims and polls before your app's lazy chunks evaluate. The wallet chunk often ends up running after `Buffer` has been set by one of those shims, or the error is swallowed by the editor overlay and the page is re-mounted, so you never see a hard failure.
+- **Opening the URL in a new tab** (preview or published) loads the app cold with no host wrapper. The Solana wallet chunk is the first thing that touches `Buffer`, so the missing global throws immediately and TanStack's root error boundary shows "This page didn't load".
 
-That's `util.inherits(X, undefined)` running at **worker module init**. The big client-side stack you pasted is downstream: SSR returns the "This page didn't load" HTML (from `src/server.ts`), the client tries to hydrate it, and React's reconciler blows up.
+We already have `src/lib/buffer-polyfill.ts` and import it at the top of the wallet files, but those files are inside a `React.lazy(() => import("@/components/wallet-provider"))` chunk. Rolldown can hoist sibling Solana modules into the same chunk and evaluate them before the polyfill's side effect runs — that's the race that bites only in the cold-load case.
 
-The existing `solanaSsrShim` in `vite.config.ts` was meant to keep Solana/`rpc-websockets` out of the worker bundle, but something in the worker SSR graph is still reaching code that calls `util.inherits` with `undefined`. Likely culprits not currently covered:
+## Fix
 
-- `@solana/wallet-standard-*`, `@wallet-standard/*`, `@solana/wallet-adapter-wallets`, `@solana-mobile/*`, etc. (pulled by `@solana/wallet-adapter-react`).
-- A subpath import (e.g. `@solana/web3.js/lib/...`) where our `base = @solana/web3.js` matcher actually does still hit, but the resolver returns a virtual id whose `\0`-prefix gets stripped by another plugin.
-- The shim's `envName === "client"` guard: in the cloudflare/nitro build the SSR environment may not be named `"ssr"`. If `this.environment` is `undefined` during early resolution it still stubs (correct), but we should explicitly confirm and stub on `ssr` flag too.
+Move the polyfill so it runs in the **main client entry**, before any lazy chunk is ever requested.
 
-## Plan
+1. Add `import "./lib/buffer-polyfill";` as the very first line of `src/router.tsx` (already in main bundle, runs before route components mount).
+2. Also add it as the first line of `src/start.ts` so it's part of the bootstrap module graph regardless of which entry Vite ships.
+3. Keep the existing imports inside the wallet files as a belt-and-braces guard.
 
-### 1. `vite.config.ts` — harden the SSR shim
-- Switch the gate from "stub unless client" to "stub when not client AND not a browser build". Use the second `resolveId` argument (`{ ssr }`) where available in addition to `this.environment?.name`.
-- Expand `SSR_STUBBED_MODULES` to include:
-  - `@solana/wallet-standard-features`
-  - `@solana/wallet-standard-wallet-adapter-base`
-  - `@solana/wallet-standard-wallet-adapter-react`
-  - `@wallet-standard/base`, `@wallet-standard/app`, `@wallet-standard/wallet`, `@wallet-standard/features`, `@wallet-standard/core`
-  - `@solana-mobile/wallet-adapter-mobile`
-  - `eventemitter3` is NOT stubbed (legitimate dep elsewhere); leave alone.
-- Treat any id starting with `@solana/` or `@wallet-standard/` as stubbed via a prefix match, so we don't have to enumerate every transitive.
-- Keep the virtual id and Proxy stub as-is, but also add `export const Keypair = stub; export const VersionedTransaction = stub; export const TransactionInstruction = stub;` so any `import { ... } from "@solana/web3.js"` that happens to be statically reachable resolves cleanly.
+No other behavior changes. After this, the new-tab load will set `window.Buffer` / `process` / `global` synchronously during the initial bundle eval, so the Solana chunk finds them when it later initializes.
 
-### 2. `src/server.ts` — surface the captured error in the HTML
-Right now `renderErrorPage()` is dependency-free and shows a generic message, which made this loop hard to diagnose. Add a hidden `<!-- ssr-error: ... -->` comment at the bottom of the response (only in non-prod or when an `x-debug` query param is present) containing `consumeLastCapturedError()`'s `.message` + first stack line. No code-change to `renderErrorPage` API; just append before sending.
+## Verification
 
-### 3. Verify the `SOLANA_RPC` secret is set in production
-`src/routes/api/public/solana-rpc.ts` returns a 500 JSON if `process.env.SOLANA_RPC` is missing. That alone wouldn't cause the `util.inherits` crash, but we should confirm the secret was actually persisted in Cloudflare env (Lovable Cloud injects it on publish). If missing, set it.
-
-### 4. Re-publish and re-check worker logs
-After the shim change, the `util.inherits` error should disappear from worker logs and the published root URL should return real HTML. If a different module-init error appears, repeat with the captured `error.stack` to identify the next leaky import.
-
-## Out of scope
-
-- No changes to wallet/Solana client code — these only run in the browser and are working there.
-- No changes to route/component structure.
+- Hard-reload `https://trustless-draw-solana.lovable.app/` in a private window — landing page renders, no root error boundary, no `Cannot read properties of undefined (reading 'from')` in the console.
+- Same check on the preview URL opened in a new tab.
+- Connect wallet still works (polyfill is unchanged, only its load timing moved earlier).
