@@ -1,4 +1,7 @@
-import { Buffer } from "buffer";
+// Use namespace import — `buffer` is a CJS package, and when aliased to the
+// browser shim some bundlers don't synthesize the named export.
+import * as BufferModule from "buffer";
+const Buffer = (BufferModule as { Buffer: unknown }).Buffer ?? (BufferModule as { default?: { Buffer: unknown } }).default?.Buffer;
 
 // Solana web3.js + wallet adapters reference Buffer/process/global at module
 // init. Browsers don't provide them — install polyfills synchronously before
