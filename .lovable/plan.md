@@ -1,30 +1,24 @@
-## Goal
-Stop the federation-lag verification failure from surfacing as a runtime/blank-screen error. Return a structured "retry" result from the server function and render a friendly inline warning + Try again button in the join form.
+## Why it loads in the Lovable preview but fails in a new tab
 
-## Changes
+The crash is the same on both: a Solana chunk runs `Buffer.from(...)` at module init and throws `Cannot read properties of undefined (reading 'from')` because `window.Buffer` isn't defined yet. The reason you only notice it when opening the URL directly:
 
-### 1. `src/lib/join.functions.ts`
-- Replace the `throw new Error("Couldn't verify yet — missing: …")` at line 85 with a normal return:
-  ```ts
-  return {
-    ok: false as const,
-    retry: true as const,
-    missing: failures,
-    message: `Couldn't verify yet — missing: ${failures.join(", ")}. Federation can lag a few seconds; try again shortly.`,
-  };
-  ```
-- Wrap the success path in `{ ok: true as const, entry: row }` so the caller has a discriminated union.
-- Leave the other `throw`s (event not found, closed, duplicate handle, DB insert error) alone — those are real errors, not transient lag.
+- **Inside the Lovable editor**, the preview iframe is wrapped by Lovable's host page. The host injects helper scripts and an error overlay, and (most importantly) it warms the page with extra runtime shims and polls before your app's lazy chunks evaluate. The wallet chunk often ends up running after `Buffer` has been set by one of those shims, or the error is swallowed by the editor overlay and the page is re-mounted, so you never see a hard failure.
+- **Opening the URL in a new tab** (preview or published) loads the app cold with no host wrapper. The Solana wallet chunk is the first thing that touches `Buffer`, so the missing global throws immediately and TanStack's root error boundary shows "This page didn't load".
 
-### 2. `src/components/join-form.tsx`
-- Add local state `retryNotice: { message: string; missing: string[] } | null`.
-- In the mutation's `onSuccess`:
-  - If `res.ok === true` → existing success toast + clear form + invalidate query, clear `retryNotice`.
-  - If `res.ok === false` → set `retryNotice` from `res`, show a `toast.warning(res.message)` (no crash, no blank screen).
-- Render the notice above the submit button when present: a small amber/muted panel with the message and a "Try again" button that re-runs `m.mutate({ handle, wallet })` with the same inputs. Keep the existing submit button working as well.
-- Clear `retryNotice` whenever `handle` or `wallet` changes (stale).
-- `onError` stays for genuine errors (duplicate handle, closed event, network).
+We already have `src/lib/buffer-polyfill.ts` and import it at the top of the wallet files, but those files are inside a `React.lazy(() => import("@/components/wallet-provider"))` chunk. Rolldown can hoist sibling Solana modules into the same chunk and evaluate them before the polyfill's side effect runs — that's the race that bites only in the cold-load case.
 
-## Out of scope
-- No changes to `mastodon.server.ts` verification logic — federation lag is real, we're only changing how we communicate it.
-- No changes to other server functions or the event page layout.
+## Fix
+
+Move the polyfill so it runs in the **main client entry**, before any lazy chunk is ever requested.
+
+1. Add `import "./lib/buffer-polyfill";` as the very first line of `src/router.tsx` (already in main bundle, runs before route components mount).
+2. Also add it as the first line of `src/start.ts` so it's part of the bootstrap module graph regardless of which entry Vite ships.
+3. Keep the existing imports inside the wallet files as a belt-and-braces guard.
+
+No other behavior changes. After this, the new-tab load will set `window.Buffer` / `process` / `global` synchronously during the initial bundle eval, so the Solana chunk finds them when it later initializes.
+
+## Verification
+
+- Hard-reload `https://trustless-draw-solana.lovable.app/` in a private window — landing page renders, no root error boundary, no `Cannot read properties of undefined (reading 'from')` in the console.
+- Same check on the preview URL opened in a new tab.
+- Connect wallet still works (polyfill is unchanged, only its load timing moved earlier).
