@@ -20,7 +20,10 @@ async function getServerEntry(): Promise<ServerEntry> {
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  response: Response,
+  url: URL,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -30,11 +33,22 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
+  const captured = consumeLastCapturedError();
+  console.error(captured ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const debug = url.searchParams.has("__ssr_debug");
+  const debugComment = debug ? buildDebugComment(captured, body) : "";
+  return new Response(renderErrorPage() + debugComment, {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
+}
+
+function buildDebugComment(captured: unknown, body: string): string {
+  const e = captured as { message?: string; stack?: string } | undefined;
+  const message = e?.message ?? body;
+  const firstStack = (e?.stack ?? "").split("\n").slice(0, 4).join(" | ");
+  const safe = `${message} :: ${firstStack}`.replace(/-->/g, "--&gt;");
+  return `\n<!-- ssr-error: ${safe} -->\n`;
 }
 
 export default {
@@ -42,10 +56,14 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return await normalizeCatastrophicSsrResponse(response, new URL(request.url));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
+      const url = new URL(request.url);
+      const debug = url.searchParams.has("__ssr_debug")
+        ? buildDebugComment(error, "")
+        : "";
+      return new Response(renderErrorPage() + debug, {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });

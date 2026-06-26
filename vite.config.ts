@@ -16,30 +16,34 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 // packages untouched.
 const SSR_STUBBED_MODULES = new Set([
   "rpc-websockets",
-  "@solana/web3.js",
-  "@solana/wallet-adapter-react",
-  "@solana/wallet-adapter-base",
-  "@solana/wallet-adapter-phantom",
-  "@solana/wallet-adapter-solflare",
+  "@solana-mobile/wallet-adapter-mobile",
 ]);
+const SSR_STUBBED_PREFIXES = ["@solana/", "@wallet-standard/"];
 const STUB_VIRTUAL_ID = "\0virtual:solana-ssr-stub";
 const solanaSsrShim = {
   name: "chaindraw:solana-ssr-shim",
   enforce: "pre" as const,
-  resolveId(this: { environment?: { name?: string } }, id: string) {
+  resolveId(
+    this: { environment?: { name?: string } },
+    id: string,
+    _importer: string | undefined,
+    opts?: { ssr?: boolean },
+  ) {
     const envName = this.environment?.name;
-    if (envName === "client") return null;
-    // Match exact pkg or any subpath of stubbed pkgs.
+    // Only the browser build should keep the real packages. Everything else
+    // (ssr, cloudflare/workerd, prerender, build:dev) gets the stub.
+    if (envName === "client" && !opts?.ssr) return null;
     const base = id.startsWith("@")
       ? id.split("/").slice(0, 2).join("/")
       : id.split("/")[0];
-    if (!SSR_STUBBED_MODULES.has(base)) return null;
+    const isStubbed =
+      SSR_STUBBED_MODULES.has(base) ||
+      SSR_STUBBED_PREFIXES.some((p) => id.startsWith(p));
+    if (!isStubbed) return null;
     return { id: STUB_VIRTUAL_ID, moduleSideEffects: false };
   },
   load(id: string) {
     if (id !== STUB_VIRTUAL_ID) return null;
-    // Proxy returns a no-op class/function for any property access, so
-    // `import { Anything } from "<stubbed>"` resolves to a safe sentinel.
     return [
       "const noop = function () {};",
       "noop.prototype = {};",
@@ -48,10 +52,12 @@ const solanaSsrShim = {
       "export default stub;",
       "export { stub as Client, stub as CommonClient, stub as WebSocket };",
       "export const __isSsrStub = true;",
-      // Re-export the proxy itself as a star fallback for unknown named imports.
       "export const Connection = stub;",
       "export const PublicKey = stub;",
       "export const Transaction = stub;",
+      "export const TransactionInstruction = stub;",
+      "export const VersionedTransaction = stub;",
+      "export const Keypair = stub;",
       "export const SystemProgram = stub;",
       "export const LAMPORTS_PER_SOL = 0;",
       "export const useWallet = () => ({ publicKey: null, connected: false, signTransaction: null });",
