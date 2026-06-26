@@ -5,6 +5,42 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { createRequire } from "node:module";
+
+// In the browser build, force `buffer` / `process` / `events` to resolve to
+// their npm browser packages instead of Vite's empty `__vite-browser-external`
+// stub. Without this, safe-buffer (transitive of the Solana wallet stack)
+// does `require('buffer').Buffer` and crashes with
+// "Cannot read properties of undefined (reading 'from')" during module init.
+const requireFromHere = createRequire(import.meta.url);
+const clientNodeShimAlias = {
+  name: "chaindraw:client-node-shim-alias",
+  enforce: "pre" as const,
+  resolveId(
+    this: { environment?: { name?: string } },
+    id: string,
+    _importer: string | undefined,
+    opts?: { ssr?: boolean },
+  ) {
+    const envName = this.environment?.name;
+    if (envName !== "client" || opts?.ssr) return null;
+    const map: Record<string, string> = {
+      buffer: "buffer/",
+      "node:buffer": "buffer/",
+      process: "process/browser",
+      "node:process": "process/browser",
+      events: "events/",
+      "node:events": "events/",
+    };
+    const target = map[id];
+    if (!target) return null;
+    try {
+      return requireFromHere.resolve(target);
+    } catch {
+      return null;
+    }
+  },
+};
 
 // The whole Solana wallet stack (@solana/web3.js, @solana/wallet-adapter-*,
 // rpc-websockets) only runs in the browser — gated behind <ClientOnly> and
@@ -77,6 +113,14 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [solanaSsrShim],
+    plugins: [
+      solanaSsrShim,
+      clientNodeShimAlias,
+    ],
+    optimizeDeps: {
+      // Force Vite to pre-bundle these CJS shims so named imports
+      // (e.g. `import { Buffer } from "buffer"`) work in dev.
+      include: ["buffer", "process/browser", "events"],
+    },
   },
 });
