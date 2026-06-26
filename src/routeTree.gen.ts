@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizerIndexRouteImport } from './routes/organizer.index'
 import { Route as OrganizerIdRouteImport } from './routes/organizer.$id'
 import { Route as EventIdRouteImport } from './routes/event.$id'
+import { Route as ApiPublicSolanaRpcRouteImport } from './routes/api/public/solana-rpc'
 import { Route as ApiPublicMastodonCallbackRouteImport } from './routes/api/public/mastodon/callback'
 
 const OrganizerRoute = OrganizerRouteImport.update({
@@ -41,6 +42,11 @@ const EventIdRoute = EventIdRouteImport.update({
   path: '/event/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSolanaRpcRoute = ApiPublicSolanaRpcRouteImport.update({
+  id: '/api/public/solana-rpc',
+  path: '/api/public/solana-rpc',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMastodonCallbackRoute =
   ApiPublicMastodonCallbackRouteImport.update({
     id: '/api/public/mastodon/callback',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
+  '/api/public/solana-rpc': typeof ApiPublicSolanaRpcRoute
   '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer': typeof OrganizerIndexRoute
+  '/api/public/solana-rpc': typeof ApiPublicSolanaRpcRoute
   '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
+  '/api/public/solana-rpc': typeof ApiPublicSolanaRpcRoute
   '/api/public/mastodon/callback': typeof ApiPublicMastodonCallbackRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
+    | '/api/public/solana-rpc'
     | '/api/public/mastodon/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer'
+    | '/api/public/solana-rpc'
     | '/api/public/mastodon/callback'
   id:
     | '__root__'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
+    | '/api/public/solana-rpc'
     | '/api/public/mastodon/callback'
   fileRoutesById: FileRoutesById
 }
@@ -102,6 +114,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrganizerRoute: typeof OrganizerRouteWithChildren
   EventIdRoute: typeof EventIdRoute
+  ApiPublicSolanaRpcRoute: typeof ApiPublicSolanaRpcRoute
   ApiPublicMastodonCallbackRoute: typeof ApiPublicMastodonCallbackRoute
 }
 
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/solana-rpc': {
+      id: '/api/public/solana-rpc'
+      path: '/api/public/solana-rpc'
+      fullPath: '/api/public/solana-rpc'
+      preLoaderRoute: typeof ApiPublicSolanaRpcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mastodon/callback': {
       id: '/api/public/mastodon/callback'
       path: '/api/public/mastodon/callback'
@@ -170,18 +190,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrganizerRoute: OrganizerRouteWithChildren,
   EventIdRoute: EventIdRoute,
+  ApiPublicSolanaRpcRoute: ApiPublicSolanaRpcRoute,
   ApiPublicMastodonCallbackRoute: ApiPublicMastodonCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
