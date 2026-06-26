@@ -23,12 +23,16 @@ async function loadWeb3() {
   return { Buffer, ...web3 };
 }
 
-// Public devnet RPC is heavily rate-limited (HTTP 429). Set
-// VITE_SOLANA_RPC in .env to a dedicated devnet endpoint (Helius,
-// QuickNode, Triton, Ankr…) for anything beyond the lightest demo use.
+// All RPC calls go through our server-side proxy (`/api/public/solana-rpc`),
+// which forwards to the upstream provider using the `SOLANA_RPC` secret.
+// This keeps any provider API key out of the client bundle. The Solana
+// Connection requires an absolute URL, so we build one from the current
+// origin in the browser. SSR never hits the wallet stack (gated by
+// <ClientOnly>), so the fallback is only used for type safety.
 export const DEVNET_RPC: string =
-  (import.meta as { env?: Record<string, string | undefined> }).env
-    ?.VITE_SOLANA_RPC || "https://api.devnet.solana.com";
+  typeof window !== "undefined"
+    ? `${window.location.origin}/api/public/solana-rpc`
+    : "https://api.devnet.solana.com";
 
 const MEMO_PROGRAM_ID_STR = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
