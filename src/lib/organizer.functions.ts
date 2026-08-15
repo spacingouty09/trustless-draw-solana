@@ -102,11 +102,7 @@ export const commitPool = createServerFn({ method: "POST" })
   });
 
 export const drawAndPay = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
-    z
-      .object({ id: z.string().uuid(), auth: authSchema })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), auth: authSchema }).parse(d))
   .handler(async ({ data }) => {
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -132,8 +128,7 @@ export const drawAndPay = createServerFn({ method: "POST" })
         issuedAt: data.auth.issued_at,
       });
       if (!v.ok) return { ok: false as const, message: v.reason };
-      if (ev.status === "settled")
-        return { ok: false as const, message: "Already settled" };
+      if (ev.status === "settled") return { ok: false as const, message: "Already settled" };
 
       const { data: entries, error: entErr } = await supabaseAdmin
         .from("entries")

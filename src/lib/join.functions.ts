@@ -7,10 +7,7 @@ const schema = z.object({
 });
 
 async function sha256Hex(input: string) {
-  const buf = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(input.toLowerCase()),
-  );
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.toLowerCase()));
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -47,8 +44,7 @@ export const joinEvent = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !ev) throw new Error(error?.message ?? "Event not found");
     if (ev.status !== "open") throw new Error("Event is not open for entries");
-    if (new Date(ev.cutoff_ts).getTime() < Date.now())
-      throw new Error("Entry window has closed");
+    if (new Date(ev.cutoff_ts).getTime() < Date.now()) throw new Error("Entry window has closed");
 
     if (session.instance.toLowerCase() !== ev.mastodon_instance.toLowerCase()) {
       return {
@@ -88,14 +84,10 @@ export const joinEvent = createServerFn({ method: "POST" })
             ev.mastodon_status_url,
             handle,
           );
-      if (!foundTimelineBoost)
-        failures.push("Boost the post");
+      if (!foundTimelineBoost) failures.push("Boost the post");
     }
     if (ev.require_follow && ev.mastodon_account_id) {
-      const followers = await m.getFollowers(
-        ev.mastodon_instance,
-        ev.mastodon_account_id,
-      );
+      const followers = await m.getFollowers(ev.mastodon_instance, ev.mastodon_account_id);
       if (!followers.some((a) => m.matchesHandle(handle, a, ev.mastodon_instance)))
         failures.push(`Follow @${ev.mastodon_account_acct}`);
     }

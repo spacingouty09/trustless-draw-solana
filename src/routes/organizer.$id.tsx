@@ -3,7 +3,9 @@ import { lazy, Suspense } from "react";
 import { ClientOnly } from "@/components/client-only";
 
 const OrganizerManageClient = lazy(() =>
-  import("@/components/organizer-manage-client").then((m) => ({ default: m.OrganizerManageClient })),
+  import("@/components/organizer-manage-client").then((m) => ({
+    default: m.OrganizerManageClient,
+  })),
 );
 
 function ManageFallback() {

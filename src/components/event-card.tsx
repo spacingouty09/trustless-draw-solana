@@ -2,7 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Countdown } from "./countdown";
 import type { Tables } from "@/integrations/supabase/types";
 
-export function EventCard({ event, entryCount = 0 }: { event: Tables<"events">; entryCount?: number }) {
+export function EventCard({
+  event,
+  entryCount = 0,
+}: {
+  event: Tables<"events">;
+  entryCount?: number;
+}) {
   const statusMap: Record<string, { label: string; class: string }> = {
     draft: { label: "Draft", class: "border-muted-foreground/40 text-muted-foreground" },
     open: { label: "Open", class: "border-primary/60 text-primary" },
@@ -17,14 +23,19 @@ export function EventCard({ event, entryCount = 0 }: { event: Tables<"events">; 
     >
       <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="flex items-center justify-between">
-        <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${s.class}`}>
+        <span
+          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${s.class}`}
+        >
           {s.label}
         </span>
         <span className="text-xs text-muted-foreground">@{event.mastodon_account_acct}</span>
       </div>
       <h3 className="text-lg font-semibold tracking-tight">{event.title}</h3>
       <div className="grid grid-cols-3 gap-2 text-sm">
-        <Stat label="Prize" value={`${Number(event.prize_total).toLocaleString()} ${event.prize_token}`} />
+        <Stat
+          label="Prize"
+          value={`${Number(event.prize_total).toLocaleString()} ${event.prize_token}`}
+        />
         <Stat label="Winners" value={String(event.num_winners)} />
         <Stat label="Entries" value={String(entryCount)} />
       </div>

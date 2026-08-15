@@ -163,8 +163,12 @@
     background-image: var(--gradient-brand);
   }
 
-  .glow-primary { box-shadow: var(--glow-primary); }
-  .glow-accent { box-shadow: var(--glow-accent); }
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+  .glow-accent {
+    box-shadow: var(--glow-accent);
+  }
 
   /* Soft grid backdrop */
   .bg-grid {

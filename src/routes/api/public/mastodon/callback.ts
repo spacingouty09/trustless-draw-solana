@@ -29,7 +29,10 @@ export const Route = createFileRoute("/api/public/mastodon/callback")({
 <p style="opacity:.7;font-size:14px">${msg.replace(/[<>&]/g, "")}</p>
 <p style="margin-top:24px"><a style="color:#7dd3fc" href="/">Back to giveaways</a></p>
 </body>`;
-          return new Response(html, { status: 400, headers: { "content-type": "text/html; charset=utf-8" } });
+          return new Response(html, {
+            status: 400,
+            headers: { "content-type": "text/html; charset=utf-8" },
+          });
         };
 
         if (error) return fail(`Mastodon returned: ${error}`);
@@ -61,7 +64,10 @@ export const Route = createFileRoute("/api/public/mastodon/callback")({
           );
 
           const headers = new Headers({ Location: `/event/${state.event_id}` });
-          headers.append("Set-Cookie", buildCookie(COOKIE_NAMES.session, session, { maxAge: TTL.session, secure }));
+          headers.append(
+            "Set-Cookie",
+            buildCookie(COOKIE_NAMES.session, session, { maxAge: TTL.session, secure }),
+          );
           return new Response(null, { status: 302, headers });
         } catch (e) {
           console.error("[mastodon callback]", e);

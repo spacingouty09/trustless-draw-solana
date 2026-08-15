@@ -19,7 +19,9 @@ export function WinnersPanel({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-accent">Winners</h3>
         {event.draw_seed && (
-          <span className="font-mono text-[10px] text-muted-foreground">seed {event.draw_seed.slice(0, 10)}…</span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            seed {event.draw_seed.slice(0, 10)}…
+          </span>
         )}
       </div>
       <ul className="mt-4 divide-y divide-border/60">
@@ -29,7 +31,9 @@ export function WinnersPanel({
             <li key={w.id} className="flex items-center justify-between py-3 text-sm">
               <div>
                 <div className="font-medium">@{entry?.handle ?? "—"}</div>
-                <div className="font-mono text-xs text-muted-foreground">{shortAddr(entry?.wallet ?? "")}</div>
+                <div className="font-mono text-xs text-muted-foreground">
+                  {shortAddr(entry?.wallet ?? "")}
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-mono text-sm">

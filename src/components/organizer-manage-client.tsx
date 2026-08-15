@@ -22,8 +22,12 @@ export function OrganizerManageClient({ id }: { id: string }) {
     refetchInterval: 6_000,
   });
 
-  if (evQuery.isLoading) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
-  if (evQuery.error) return <div className="p-10 text-center text-destructive">{(evQuery.error as Error).message}</div>;
+  if (evQuery.isLoading)
+    return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
+  if (evQuery.error)
+    return (
+      <div className="p-10 text-center text-destructive">{(evQuery.error as Error).message}</div>
+    );
   if (!evQuery.data) return null;
 
   const { event, entries, winners } = evQuery.data;
@@ -217,7 +221,12 @@ function PayoutCard({
   onDone,
 }: {
   event: { id: string; prize_token: string };
-  winners: Array<{ id: string; entry_id: string; share: number | string; payout_tx: string | null }>;
+  winners: Array<{
+    id: string;
+    entry_id: string;
+    share: number | string;
+    payout_tx: string | null;
+  }>;
   entries: Array<{ id: string; wallet: string; handle: string }>;
   onDone: () => void;
 }) {

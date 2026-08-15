@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -134,8 +135,20 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Wallet adapter is browser-only — mount under ClientOnly to avoid SSR window refs. */}
-      <ClientOnly fallback={<AppShell><Outlet /></AppShell>}>
-        <Suspense fallback={<AppShell><Outlet /></AppShell>}>
+      <ClientOnly
+        fallback={
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        }
+      >
+        <Suspense
+          fallback={
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          }
+        >
           <SolanaWalletProvider>
             <AppShell>
               <Outlet />
@@ -144,6 +157,7 @@ function RootComponent() {
         </Suspense>
       </ClientOnly>
       <Toaster theme="dark" richColors />
+      <SpeedInsights />
     </QueryClientProvider>
   );
 }

@@ -47,7 +47,10 @@ function timingSafeEqual(a: string, b: string): boolean {
   return r === 0;
 }
 
-export async function signPayload<T extends object>(payload: T, ttlSeconds: number): Promise<string> {
+export async function signPayload<T extends object>(
+  payload: T,
+  ttlSeconds: number,
+): Promise<string> {
   const body = { ...payload, exp: Math.floor(Date.now() / 1000) + ttlSeconds };
   const payloadB64 = b64urlEncode(new TextEncoder().encode(JSON.stringify(body)));
   const sig = await hmac(payloadB64);
