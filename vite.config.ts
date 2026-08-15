@@ -50,10 +50,7 @@ const clientNodeShimAlias = {
 // when web3.js gets pulled in. We stub the entire chain in the SSR/worker
 // env so the worker bundle stays clean. The client env keeps the real
 // packages untouched.
-const SSR_STUBBED_MODULES = new Set([
-  "rpc-websockets",
-  "@solana-mobile/wallet-adapter-mobile",
-]);
+const SSR_STUBBED_MODULES = new Set(["rpc-websockets", "@solana-mobile/wallet-adapter-mobile"]);
 const SSR_STUBBED_PREFIXES = ["@solana/", "@wallet-standard/"];
 const STUB_VIRTUAL_ID = "\0virtual:solana-ssr-stub";
 const solanaSsrShim = {
@@ -69,12 +66,9 @@ const solanaSsrShim = {
     // Only the browser build should keep the real packages. Everything else
     // (ssr, cloudflare/workerd, prerender, build:dev) gets the stub.
     if (envName === "client" && !opts?.ssr) return null;
-    const base = id.startsWith("@")
-      ? id.split("/").slice(0, 2).join("/")
-      : id.split("/")[0];
+    const base = id.startsWith("@") ? id.split("/").slice(0, 2).join("/") : id.split("/")[0];
     const isStubbed =
-      SSR_STUBBED_MODULES.has(base) ||
-      SSR_STUBBED_PREFIXES.some((p) => id.startsWith(p));
+      SSR_STUBBED_MODULES.has(base) || SSR_STUBBED_PREFIXES.some((p) => id.startsWith(p));
     if (!isStubbed) return null;
     return { id: STUB_VIRTUAL_ID, moduleSideEffects: false };
   },
@@ -113,10 +107,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [
-      solanaSsrShim,
-      clientNodeShimAlias,
-    ],
+    plugins: [solanaSsrShim, clientNodeShimAlias],
     optimizeDeps: {
       // Force Vite to pre-bundle these CJS shims so named imports
       // (e.g. `import { Buffer } from "buffer"`) work in dev.

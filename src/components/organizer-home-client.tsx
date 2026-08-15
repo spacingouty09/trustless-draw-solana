@@ -54,7 +54,8 @@ export function OrganizerHomeClient() {
                   <div>
                     <div className="font-medium">{e.title}</div>
                     <div className="text-xs text-muted-foreground">
-                      {Number(e.prize_total).toLocaleString()} {e.prize_token} · {e.num_winners} winners
+                      {Number(e.prize_total).toLocaleString()} {e.prize_token} · {e.num_winners}{" "}
+                      winners
                     </div>
                   </div>
                   <div className="text-right text-xs">
@@ -137,7 +138,11 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
         New giveaway
       </h2>
       <div className="mt-4 space-y-3">
-        <TF label="Title" value={form.title} onChange={(v) => setForm((f) => ({ ...f, title: v }))} />
+        <TF
+          label="Title"
+          value={form.title}
+          onChange={(v) => setForm((f) => ({ ...f, title: v }))}
+        />
         <TF
           label="Mastodon post URL"
           placeholder="https://mastodon.social/@you/123…"
@@ -192,7 +197,11 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
             value={String(form.prize_total)}
             onChange={(v) => setForm((f) => ({ ...f, prize_total: Number(v) }))}
           />
-          <TF label="Token" value={form.prize_token} onChange={(v) => setForm((f) => ({ ...f, prize_token: v }))} />
+          <TF
+            label="Token"
+            value={form.prize_token}
+            onChange={(v) => setForm((f) => ({ ...f, prize_token: v }))}
+          />
           <TF
             label="Winners"
             type="number"
@@ -258,16 +267,29 @@ function CheckRow({
     <label className="flex cursor-pointer items-center gap-3 rounded-md px-1 py-1 hover:bg-secondary/40">
       <span
         className={`grid h-5 w-5 place-items-center rounded border transition-colors ${
-          checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"
+          checked
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-background"
         }`}
       >
         {checked && (
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            viewBox="0 0 16 16"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <path d="M3 8.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </span>
-      <input type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       <span className="text-sm">{label}</span>
     </label>
   );

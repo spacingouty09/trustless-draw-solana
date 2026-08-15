@@ -5,11 +5,24 @@
 // can't be used to probe internal infrastructure.
 function isPrivateHost(host: string): boolean {
   const h = host.toLowerCase().split(":")[0]; // strip port
-  if (!h || h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") ||
-      h.endsWith(".internal") || h.endsWith(".intranet")) return true;
+  if (
+    !h ||
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h.endsWith(".local") ||
+    h.endsWith(".internal") ||
+    h.endsWith(".intranet")
+  )
+    return true;
   // IPv6 loopback / link-local / unique-local
-  if (h === "::1" || h.startsWith("[::1") || h.startsWith("fe80") || h.startsWith("fc") ||
-      h.startsWith("fd")) return true;
+  if (
+    h === "::1" ||
+    h.startsWith("[::1") ||
+    h.startsWith("fe80") ||
+    h.startsWith("fc") ||
+    h.startsWith("fd")
+  )
+    return true;
   // IPv4 dotted-quad ranges
   const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (m) {
@@ -137,9 +150,7 @@ export async function getFavourited(instance: string, statusId: string) {
 }
 
 export async function getReblogged(instance: string, statusId: string) {
-  return fetchAllPaginated(
-    `https://${instance}/api/v1/statuses/${statusId}/reblogged_by?limit=80`,
-  );
+  return fetchAllPaginated(`https://${instance}/api/v1/statuses/${statusId}/reblogged_by?limit=80`);
 }
 
 function normalizeStatusRef(value: string | null | undefined) {
@@ -182,9 +193,11 @@ export async function hasBoostedStatus(
         statuses.some((status) => {
           const boosted = status.reblog;
           if (!boosted) return false;
-          return [boosted.id, normalizeStatusRef(boosted.url), normalizeStatusRef(boosted.uri)].some((ref) =>
-            targetRefs.has(ref),
-          );
+          return [
+            boosted.id,
+            normalizeStatusRef(boosted.url),
+            normalizeStatusRef(boosted.uri),
+          ].some((ref) => targetRefs.has(ref));
         })
       ) {
         return true;
@@ -198,9 +211,7 @@ export async function hasBoostedStatus(
 }
 
 export async function getFollowers(instance: string, accountId: string) {
-  return fetchAllPaginated(
-    `https://${instance}/api/v1/accounts/${accountId}/followers?limit=80`,
-  );
+  return fetchAllPaginated(`https://${instance}/api/v1/accounts/${accountId}/followers?limit=80`);
 }
 
 export function matchesHandle(target: string, account: PagedAccount, targetInstance: string) {

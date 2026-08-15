@@ -5,11 +5,7 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const { getRequest } = await import("@tanstack/react-start/server");
-    const {
-      ensureOauthApp,
-      signPayload,
-      TTL,
-    } = await import("./mastodon-auth.server");
+    const { ensureOauthApp, signPayload, TTL } = await import("./mastodon-auth.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: ev, error } = await supabaseAdmin

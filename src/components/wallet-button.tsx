@@ -43,7 +43,8 @@ export function WalletButton() {
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
           Select wallet
         </div>
-        {wallets.filter((w) => w.readyState === "Installed" || w.readyState === "Loadable").length === 0 && (
+        {wallets.filter((w) => w.readyState === "Installed" || w.readyState === "Loadable")
+          .length === 0 && (
           <div className="px-2 py-2 text-xs text-muted-foreground">
             No wallets detected. Install Phantom or Solflare.
           </div>

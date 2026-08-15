@@ -16,10 +16,10 @@ export const Route = createFileRoute("/api/public/solana-rpc")({
       POST: async ({ request }) => {
         const upstream = process.env.SOLANA_RPC;
         if (!upstream) {
-          return new Response(
-            JSON.stringify({ error: "SOLANA_RPC not configured" }),
-            { status: 500, headers: { "content-type": "application/json", ...corsHeaders } },
-          );
+          return new Response(JSON.stringify({ error: "SOLANA_RPC not configured" }), {
+            status: 500,
+            headers: { "content-type": "application/json", ...corsHeaders },
+          });
         }
         const body = await request.text();
         const res = await fetch(upstream, {

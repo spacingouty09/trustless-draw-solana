@@ -22,13 +22,15 @@ export const Route = createFileRoute("/event/$id")({
       { property: "og:title", content: `Giveaway · ChainDraw` },
     ],
   }),
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(eventQuery(params.id)),
+  loader: ({ context, params }) => context.queryClient.ensureQueryData(eventQuery(params.id)),
   component: EventPage,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-2xl px-6 py-20 text-center">
       <p className="text-destructive">{error.message}</p>
-      <Link to="/" className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/"
+        className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+      >
         ← Back to giveaways
       </Link>
     </div>
@@ -84,8 +86,8 @@ function EventPage() {
               {isSettled
                 ? "This giveaway has been drawn. See winners on the left."
                 : event.status === "draft"
-                ? "Organizer hasn't committed the prize pool yet."
-                : "Entry window closed. Awaiting draw."}
+                  ? "Organizer hasn't committed the prize pool yet."
+                  : "Entry window closed. Awaiting draw."}
             </div>
           )}
           <a

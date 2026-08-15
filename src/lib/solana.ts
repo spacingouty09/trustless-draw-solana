@@ -4,20 +4,11 @@
 // lazy-import it inside async functions so the module graph stays clean for
 // the worker bundle. Pure helpers (explorerTx, shortAddr) carry no runtime
 // dep on web3.js and remain safe to import anywhere.
-import type {
-  PublicKey as PublicKeyT,
-  Transaction as TransactionT,
-} from "@solana/web3.js";
+import type { PublicKey as PublicKeyT, Transaction as TransactionT } from "@solana/web3.js";
 
 async function loadWeb3() {
-  const [{ Buffer }, web3] = await Promise.all([
-    import("buffer"),
-    import("@solana/web3.js"),
-  ]);
-  if (
-    typeof globalThis !== "undefined" &&
-    !(globalThis as { Buffer?: unknown }).Buffer
-  ) {
+  const [{ Buffer }, web3] = await Promise.all([import("buffer"), import("@solana/web3.js")]);
+  if (typeof globalThis !== "undefined" && !(globalThis as { Buffer?: unknown }).Buffer) {
     (globalThis as { Buffer?: unknown }).Buffer = Buffer;
   }
   return { Buffer, ...web3 };

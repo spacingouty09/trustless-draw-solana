@@ -63,8 +63,7 @@ function Hero({ hasEvents }: { hasEvents: boolean }) {
             Live on Solana devnet
           </span>
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-            Trustless social giveaways,{" "}
-            <span className="text-gradient">committed on-chain.</span>
+            Trustless social giveaways, <span className="text-gradient">committed on-chain.</span>
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
             Brands lock the prize pool with Solana Fixed Delegation. Entries are verified from

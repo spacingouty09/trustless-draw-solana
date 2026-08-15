@@ -29,7 +29,8 @@ export function PrizePoolPanel({ event }: { event: Tables<"events"> }) {
             {total.toLocaleString()} <span className="text-2xl">{event.prize_token}</span>
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {event.num_winners} winner{event.num_winners > 1 ? "s" : ""} · {share.toLocaleString()} {event.prize_token} each
+            {event.num_winners} winner{event.num_winners > 1 ? "s" : ""} · {share.toLocaleString()}{" "}
+            {event.prize_token} each
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -42,9 +43,25 @@ export function PrizePoolPanel({ event }: { event: Tables<"events"> }) {
       </div>
 
       <dl className="mt-6 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-        <Field label="Organizer" value={shortAddr(event.organizer_pubkey)} href={explorerAddr(event.organizer_pubkey)} />
-        {event.commit_tx && <Field label="Commit tx" value={shortAddr(event.commit_tx)} href={explorerTx(event.commit_tx)} />}
-        {event.delegation_pda && <Field label="Delegation PDA" value={shortAddr(event.delegation_pda)} href={explorerAddr(event.delegation_pda)} />}
+        <Field
+          label="Organizer"
+          value={shortAddr(event.organizer_pubkey)}
+          href={explorerAddr(event.organizer_pubkey)}
+        />
+        {event.commit_tx && (
+          <Field
+            label="Commit tx"
+            value={shortAddr(event.commit_tx)}
+            href={explorerTx(event.commit_tx)}
+          />
+        )}
+        {event.delegation_pda && (
+          <Field
+            label="Delegation PDA"
+            value={shortAddr(event.delegation_pda)}
+            href={explorerAddr(event.delegation_pda)}
+          />
+        )}
       </dl>
     </div>
   );
@@ -53,7 +70,9 @@ export function PrizePoolPanel({ event }: { event: Tables<"events"> }) {
 function Dot({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className={`h-2 w-2 rounded-full ${ok ? "bg-primary shadow-[0_0_8px_oklch(0.78_0.19_162/80%)]" : "bg-destructive"}`} />
+      <span
+        className={`h-2 w-2 rounded-full ${ok ? "bg-primary shadow-[0_0_8px_oklch(0.78_0.19_162/80%)]" : "bg-destructive"}`}
+      />
       {label}
     </span>
   );

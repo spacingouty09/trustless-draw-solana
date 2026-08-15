@@ -9,15 +9,14 @@ function publicClient() {
     (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_SUPABASE_URL;
   const key =
     process.env.SUPABASE_PUBLISHABLE_KEY ||
-    (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+    (import.meta as { env?: Record<string, string | undefined> }).env
+      ?.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) {
     throw new Error("Supabase env not configured (SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY)");
   }
-  return createClient<Database>(
-    url,
-    key,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+  return createClient<Database>(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export const listEvents = createServerFn({ method: "GET" }).handler(async () => {
