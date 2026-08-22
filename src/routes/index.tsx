@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { listEvents } from "@/lib/events.functions";
 import { EventCard } from "@/components/event-card";
+import { PRODUCT_NAME } from "@/lib/product";
 
 const eventsQuery = queryOptions({
   queryKey: ["events"],
@@ -12,7 +13,7 @@ const eventsQuery = queryOptions({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ChainDraw — Trustless social giveaways on Solana" },
+      { title: `${PRODUCT_NAME} — Trustless social giveaways on Solana` },
       {
         name: "description",
         content:

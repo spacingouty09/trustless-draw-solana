@@ -16,6 +16,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ClientOnly } from "@/components/client-only";
 import { Toaster } from "@/components/ui/sonner";
+import { PRODUCT_NAME } from "@/lib/product";
 
 // Lazy so @solana/wallet-adapter-* is never pulled into the SSR bundle
 // (some transitive deps crash on Cloudflare Workers at module init).
@@ -88,13 +89,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ChainDraw — Trustless social giveaways on Solana" },
+      { title: `${PRODUCT_NAME} — Trustless social giveaways on Solana` },
       {
         name: "description",
         content:
           "Brands commit prizes on-chain. We verify entries from Mastodon and push payouts to winners. No escrow, no trust required.",
       },
-      { property: "og:title", content: "ChainDraw — Trustless social giveaways on Solana" },
+      { property: "og:title", content: `${PRODUCT_NAME} — Trustless social giveaways on Solana` },
       {
         property: "og:description",
         content: "Commit prizes on-chain. Verify entries from Mastodon. Auto-pay winners.",

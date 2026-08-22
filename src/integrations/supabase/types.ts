@@ -148,6 +148,21 @@ export type Database = {
           },
         ];
       };
+      wallet_addresses: {
+        Row: {
+          network: string;
+          address: string;
+        };
+        Insert: {
+          network: string;
+          address?: string;
+        };
+        Update: {
+          network?: string;
+          address?: string;
+        };
+        Relationships: [];
+      };
       interest_signups: {
         Row: {
           id: string;

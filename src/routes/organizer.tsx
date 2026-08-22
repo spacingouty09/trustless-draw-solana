@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, useRouter } from "@tanstack/react-router";
+import { PRODUCT_NAME } from "@/lib/product";
 
 export const Route = createFileRoute("/organizer")({
   head: () => ({
     meta: [
-      { title: "Organizer · ChainDraw" },
+      { title: `Organizer · ${PRODUCT_NAME}` },
       { name: "description", content: "Create on-chain-committed giveaways and draw winners." },
     ],
   }),

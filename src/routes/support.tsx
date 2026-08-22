@@ -15,14 +15,15 @@ import {
   NetworkHyperEvm,
 } from "@web3icons/react";
 import { getWalletAddresses, subscribeEmail, submitSuggestion } from "@/lib/support.functions";
+import { PRODUCT_NAME } from "@/lib/product";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
     meta: [
-      { title: "Support ChainDraw" },
+      { title: `Support ${PRODUCT_NAME}` },
       {
         name: "description",
-        content: "Follow updates, support development, or send feedback on ChainDraw.",
+        content: `Follow updates, support development, or send feedback on ${PRODUCT_NAME}.`,
       },
     ],
   }),
@@ -33,7 +34,7 @@ function SupportPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-6 py-10">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Support ChainDraw</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Support {PRODUCT_NAME}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           The giveaway product above is a live devnet MVP. If you want to follow where it's
           headed, help fund development, or tell us what to build next — this is the page.
@@ -154,7 +155,7 @@ function DonationCard() {
         Support development
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Donations go straight to funding ChainDraw's build — the on-chain program, more platform
+        Donations go straight to funding {PRODUCT_NAME}'s build — the on-chain program, more platform
         adapters, mainnet launch. Tap a network to copy its address.
       </p>
       <div className="mt-4 grid grid-cols-5 gap-x-2 gap-y-4">

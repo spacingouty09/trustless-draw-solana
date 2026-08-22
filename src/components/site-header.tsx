@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ClientOnly } from "./client-only";
+import { PRODUCT_NAME } from "@/lib/product";
 
 const WalletButton = lazy(() =>
   import("./wallet-button").then((m) => ({ default: m.WalletButton })),
@@ -18,7 +19,7 @@ export function SiteHeader() {
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand glow-primary">
             <span className="text-sm font-bold text-primary-foreground">⛓</span>
           </div>
-          <span className="text-lg font-semibold tracking-tight">ChainDraw</span>
+          <span className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</span>
           <span className="ml-2 hidden rounded-full border border-border/70 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground sm:inline-block">
             Devnet
           </span>

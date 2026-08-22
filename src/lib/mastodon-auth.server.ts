@@ -2,6 +2,7 @@
 // and HMAC-signed cookies (state + session).
 
 import { lookupAccount } from "./mastodon.server";
+import { PRODUCT_NAME } from "./product";
 
 const SESSION_COOKIE = "md_session";
 const STATE_COOKIE = "md_oauth_state";
@@ -128,7 +129,7 @@ export async function ensureOauthApp(
   if (existing) return existing;
 
   const form = new URLSearchParams({
-    client_name: "ChainDraw",
+    client_name: PRODUCT_NAME,
     redirect_uris: redirectUri,
     scopes: "read:accounts",
     website: new URL(redirectUri).origin,

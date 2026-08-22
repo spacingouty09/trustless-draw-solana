@@ -6,6 +6,7 @@ import { RequirementsChecklist } from "@/components/requirements-checklist";
 import { JoinForm } from "@/components/join-form";
 import { WinnersPanel } from "@/components/winners-panel";
 import { Countdown } from "@/components/countdown";
+import { PRODUCT_NAME } from "@/lib/product";
 
 const eventQuery = (id: string) =>
   queryOptions({
@@ -17,9 +18,9 @@ const eventQuery = (id: string) =>
 export const Route = createFileRoute("/event/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Giveaway · ChainDraw` },
+      { title: `Giveaway · ${PRODUCT_NAME}` },
       { name: "description", content: "Verified on Mastodon, paid on Solana." },
-      { property: "og:title", content: `Giveaway · ChainDraw` },
+      { property: "og:title", content: `Giveaway · ${PRODUCT_NAME}` },
     ],
   }),
   loader: ({ context, params }) => context.queryClient.ensureQueryData(eventQuery(params.id)),
