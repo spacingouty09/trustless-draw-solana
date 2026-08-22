@@ -33,3 +33,11 @@ dist-ssr
 .vercel
 .env*
 !.env.example
+
+# Anchor / Rust program (M1)
+.anchor
+target
+**/*.rs.bk
+test-ledger
+.yarn
+.surfpool
