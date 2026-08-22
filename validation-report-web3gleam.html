@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChainDraw Validation Sprint 3 — Web3 Gleam Reframe</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3; --dim:#8b949e; --accent:#a371f7; --go:#3fb950; --warn:#d29922; --stop:#f85149; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text); font:16px/1.6 -apple-system,'Segoe UI',Roboto,sans-serif; padding:2.5rem 1.25rem 4rem; }
+  main { max-width:880px; margin:0 auto; }
+  h1 { font-size:1.9rem; letter-spacing:-.02em; }
+  h2 { margin:2.2rem 0 .8rem; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; font-size:.85rem; }
+  .sub { color:var(--dim); margin-top:.3rem; }
+  .verdict { margin-top:1.6rem; border:1px solid var(--go); border-left:6px solid var(--go); background:#101f14; padding:1.1rem 1.3rem; border-radius:8px; }
+  .verdict strong { color:var(--go); font-size:1.05rem; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:.95rem; }
+  th,td { padding:.6rem .9rem; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--dim); font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:.1rem .55rem; border-radius:99px; font-size:.78rem; font-weight:600; }
+  .p-go { background:#12261a; color:var(--go); border:1px solid #23492f; }
+  .p-warn { background:#261f12; color:var(--warn); border:1px solid #4d3d16; }
+  .p-stop { background:#291416; color:var(--stop); border:1px solid #582225; }
+  ul { padding-left:1.2rem; } li { margin:.45rem 0; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem 1.2rem; margin:.8rem 0; }
+  .dim { color:var(--dim); } code { background:#21262d; padding:.1em .4em; border-radius:4px; font-size:.88em; }
+  a { color:#58a6ff; text-decoration:none; } a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ChainDraw — Validation Sprint 3 (Web3 Gleam.io reframe)</h1>
+  <p class="sub">Multi-platform verifiable engagement campaigns · 2026-08-15 · prior verdicts: pivot (0.6) → go (0.75)</p>
+
+  <div class="verdict">
+    <strong>Verdict: GO, with a positioning condition — confidence 0.7</strong>
+    <p style="margin-top:.5rem">The web3 quest-platform space (Galxe, Zealy, Layer3, QuestN — 23+ companies) is crowded and does <em>not</em> leave room for another generic "do tasks, earn crypto" product. But ChainDraw's reframe survives on two seams the incumbents don't cover: <strong>(1) trustless prize settlement</strong> — every quest platform and Gleam itself picks winners and distributes rewards as a centralized black box — and <strong>(2) platform coverage</strong> — quest platforms live on X/Discord/Telegram + on-chain tasks; nobody verifies engagement on the fediverse, Bluesky, YouTube, or Weibo. Condition: never market as a "quest platform" — the category is owned. Market as <em>provably fair giveaways, on platforms nobody else can verify</em>.</p>
+  </div>
+
+  <h2>Competitive reality (the hard look)</h2>
+  <table>
+    <tr><th>Player</th><th>What they own</th><th>What they don't</th></tr>
+    <tr><td><a href="https://www.hangryfeed.com/insights/web3/30-galaxy-vs-layer3-best-web3-quest-platform">Galxe</a></td><td>Largest quest user base ("millions"); no-code campaigns; Galxe Passport anti-sybil; X/Discord/Telegram + on-chain tasks</td><td>Random-draw giveaways with committed prizes; auditable winner selection; any fediverse/Bluesky/Weibo/YouTube verification</td></tr>
+    <tr><td>Zealy</td><td>Gamified XP/leaderboard community sprints</td><td>Same gaps; rewards are discretionary, not committed</td></tr>
+    <tr><td>Layer3</td><td>Premium on-chain "journeys", protocol retention</td><td>Social-platform breadth; giveaway mechanics</td></tr>
+    <tr><td><a href="https://gleam.io/templates/competitions/crypto-giveaway">Gleam.io</a></td><td>The web2 action-checklist model at scale; explicitly allows crypto giveaways (templates exist)</td><td>Verification depth (self-reported actions), trustless draws, committed prizes, payout trail</td></tr>
+    <tr><td>Raffle dApps (GiveFi, raffl)</td><td>On-chain fairness for paid-ticket raffles</td><td>Free social-engagement campaigns; multi-platform anything</td></tr>
+  </table>
+  <div class="card"><strong>The open seam:</strong> "provably fair" × "multi-platform social verification" × "free-entry giveaway" is occupied by nobody. Gleam has the mechanics without the trust; quest platforms have the audience without the fairness or platform breadth; raffle dApps have the fairness without the social layer.</div>
+
+  <h2>Demand signals</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Organizer budget is proven at category scale:</strong> the quest-platform market sustains 23+ companies with paid campaign tooling (<a href="https://thegrid.id/discovery/productType/questing-platform">The Grid directory</a>) — marketers demonstrably pay for verified social-task campaigns.</li>
+      <li><strong>Web2-side demand exists too:</strong> Gleam maintains dedicated crypto-giveaway templates — the incumbent's own product line confirms campaigners want this.</li>
+      <li><strong>The industry's loudest pain is verifiability:</strong> in unprotected campaigns <a href="https://blog.bandit.network/2024/10/22/protect-your-web3-project-from-sybil-attacks-with-bandits-solution/">80%+ of participants are sybil</a>, and "web2 social verification undermined by bots" is cited as a core weakness across the space — ChainDraw's per-platform account-verified, one-entry-per-identity model attacks the pain directly.</li>
+      <li><strong>Prior sprints stand:</strong> Farcaster giveaway tools with real usage (Cast Picker, Superchain Raffle); scam-scale evidence of the trust problem; no Solana product doing free social-engagement giveaways.</li>
+    </ul>
+  </div>
+
+  <h2>Go criteria (need 3/5)</h2>
+  <table>
+    <tr><th>Criterion</th><th>Met?</th><th>Note</th></tr>
+    <tr><td>Demand ≥ 2</td><td><span class="pill p-go">Yes</span></td><td>Category-scale organizer budget + incumbent's crypto templates + sybil pain</td></tr>
+    <tr><td>Feasibility</td><td><span class="pill p-go">Yes</span></td><td>Schema refactor + adapters; no research problems</td></tr>
+    <tr><td>MVP ≤ 2 weeks</td><td><span class="pill p-go">Yes</span></td><td>Actions schema + Farcaster adapter ≈ 1–2 weeks on the live base</td></tr>
+    <tr><td>Unfair advantage</td><td><span class="pill p-warn">Modest</span></td><td>Working trustless-draw MVP + platform seam; not durable alone — speed matters</td></tr>
+    <tr><td>Crypto necessary</td><td><span class="pill p-go">Yes</span></td><td>Trustless settlement IS the differentiator; escrow/VRF make it fully real</td></tr>
+  </table>
+
+  <h2>Risks</h2>
+  <table>
+    <tr><th>Category</th><th>Risk</th><th>Severity</th></tr>
+    <tr><td>Market</td><td>Positioning drift into the quest-platform category → outgunned by Galxe/Zealy distribution. Mitigation: lead with provable fairness + underserved platforms; avoid X/Discord head-on until differentiated.</td><td><span class="pill p-stop">High</span></td></tr>
+    <tr><td>Product</td><td>Sybil/bot entries would hollow out the "verified engagement" promise at scale. Mitigation: per-platform account age/activity heuristics; Proof-of-Human integration (superstack has a ready POH skill); one-entry-per-verified-identity already enforced.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Product integrity</td><td>Unchanged: memo commitment + server seed until escrow/VRF — do not over-claim "trustless" in marketing yet.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Technical</td><td>Multi-platform schema refactor touches every flow; per-platform API quotas at scale.</td><td><span class="pill p-go">Low-Med</span></td></tr>
+    <tr><td>Regulatory</td><td>Sweepstakes rules multiply per jurisdiction as platforms widen; Weibo prize-side gray zone (documented in appidea.md).</td><td><span class="pill p-warn">Medium</span></td></tr>
+  </table>
+
+  <h2>Integration-first assessment</h2>
+  <div class="card">
+    <ul>
+      <li>All near-term work is integration: platform APIs (Neynar, AT Protocol, bots), Switchboard/ORAO VRF, POH API for sybil resistance. Custom on-chain code stays scoped to the small escrow program (later milestone).</li>
+      <li>Build order confirmed: actions schema → Farcaster adapter → Bluesky adapter → reply-code engine.</li>
+    </ul>
+  </div>
+
+  <p class="dim" style="margin-top:2rem">superstack <code>/validate-idea</code> sprint 3 · sources: The Grid questing directory, Galxe/Layer3/Zealy comparisons, Bandit sybil data, Gleam crypto templates/policy, sprints 1–2 corpus</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChainDraw Validation Sprint 2 — Farcaster Pivot</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3; --dim:#8b949e; --accent:#a371f7; --go:#3fb950; --warn:#d29922; --stop:#f85149; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text); font:16px/1.6 -apple-system,'Segoe UI',Roboto,sans-serif; padding:2.5rem 1.25rem 4rem; }
+  main { max-width:880px; margin:0 auto; }
+  h1 { font-size:1.9rem; letter-spacing:-.02em; }
+  h2 { margin:2.2rem 0 .8rem; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; font-size:.85rem; }
+  .sub { color:var(--dim); margin-top:.3rem; }
+  .verdict { margin-top:1.6rem; border:1px solid var(--go); border-left:6px solid var(--go); background:#101f14; padding:1.1rem 1.3rem; border-radius:8px; }
+  .verdict strong { color:var(--go); font-size:1.05rem; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-size:.95rem; }
+  th,td { padding:.6rem .9rem; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--dim); font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:.1rem .55rem; border-radius:99px; font-size:.78rem; font-weight:600; }
+  .p-go { background:#12261a; color:var(--go); border:1px solid #23492f; }
+  .p-warn { background:#261f12; color:var(--warn); border:1px solid #4d3d16; }
+  .p-stop { background:#291416; color:var(--stop); border:1px solid #582225; }
+  ul { padding-left:1.2rem; } li { margin:.45rem 0; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem 1.2rem; margin:.8rem 0; }
+  .dim { color:var(--dim); } code { background:#21262d; padding:.1em .4em; border-radius:4px; font-size:.88em; }
+  a { color:#58a6ff; text-decoration:none; } a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ChainDraw — Validation Sprint 2 (Farcaster pivot)</h1>
+  <p class="sub">Re-validation after channel pivot: Farcaster-first (covers Base App), Mastodon retained · 2026-08-15 · prior verdict: PIVOT (0.6)</p>
+
+  <div class="verdict">
+    <strong>Verdict: GO — confidence 0.75</strong>
+    <p style="margin-top:.5rem">The pivot fixes the failed dimension. On Farcaster, giveaway mechanics are <em>native behavior</em>, not a culture violation: the protocol itself pays weekly USDC engagement rewards, airdrop/quest culture is entrenched, and multiple giveaway tools already exist and get used. Demand score moves from 1/3 to <strong>2–3/3</strong>. Go criteria met: 5 of 5. Conditions: differentiate on the trust story (on-chain commitment + Solana payouts) rather than raw raffle mechanics, and package as a mini-app for Base App distribution.</p>
+  </div>
+
+  <h2>What changed vs sprint 1</h2>
+  <table>
+    <tr><th>Dimension</th><th>Sprint 1 (Mastodon)</th><th>Sprint 2 (Farcaster)</th></tr>
+    <tr><td>Demand evidence</td><td><span class="pill p-warn">Weak 1/3</span> — no organizer pull, hostile culture</td><td><span class="pill p-go">Moderate-strong 2–3/3</span> — live tools with users, platform-level engagement budget, quest culture</td></tr>
+    <tr><td>Distribution</td><td><span class="pill p-stop">Red flag</span> — anti-promo, anti-crypto</td><td><span class="pill p-go">Aligned</span> — Warpcast + Base App (140+ countries since Dec '25)</td></tr>
+    <tr><td>Payout UX</td><td>Manual wallet entry by entrant</td><td><span class="pill p-go">Verified Solana address on the Farcaster profile</span> — no wallet-entry step</td></tr>
+    <tr><td>Competition</td><td>None in niche (because no market)</td><td><span class="pill p-warn">Present</span> — frame/mini-app raffles exist (see below); differentiation required</td></tr>
+  </table>
+
+  <h2>Demand signals (concrete, per rubric)</h2>
+  <div class="card">
+    <ul>
+      <li><strong>People already hack together versions of this</strong> — <a href="https://ethglobal.com/showcase/cast-picker-ymirh">Cast Picker</a> (ETHGlobal project; like+follow entry, on-chain raffle record via IPFS, in-frame draws) and <a href="https://castpicker.vercel.app/">its live frame</a>. Per the rubric, "hacking together a manual version" is a top-tier signal.</li>
+      <li><strong>Multiple independent teams shipped in the niche</strong> — <a href="https://www.superchain.eco/insights/play-win-and-earn-the-superchain-raffle-is-here">Superchain Raffle</a> mini-app runs weekly OP-token raffles with automatic entry via the Farcaster mini-app.</li>
+      <li><strong>There is platform-level budget behind engagement</strong> — Farcaster pays weekly USDC rewards to top-engaging accounts (to Base wallets), and quest/airdrop mechanics are the ecosystem's default growth playbook. Giveaways are a native primitive here, not spam.</li>
+      <li><strong>Solana-side gap persists</strong> — sprint 1 established no live Solana product does free social-engagement giveaways (existing players are paid-ticket raffles).</li>
+    </ul>
+  </div>
+
+  <h2>Go/no-go criteria (need 3/5)</h2>
+  <table>
+    <tr><th>Criterion</th><th>Met?</th><th>Evidence</th></tr>
+    <tr><td>Demand score ≥ 2</td><td><span class="pill p-go">Yes</span></td><td>Signals above; 1 strong + several corroborating</td></tr>
+    <tr><td>Feasibility straightforward</td><td><span class="pill p-go">Yes</span></td><td>Neynar API (free start tier, compute-unit pricing) + Sign In With Farcaster (FIP-11); adapter pattern already designed</td></tr>
+    <tr><td>Time to MVP ≤ 2 weeks</td><td><span class="pill p-go">Yes</span></td><td>Base MVP live; Farcaster adapter estimated in days</td></tr>
+    <tr><td>Unfair advantage</td><td><span class="pill p-go">Yes (modest)</span></td><td>Working multi-protocol product + Solana payout rail; frame competitors are single-network, EVM-only, no prize commitment story</td></tr>
+    <tr><td>Crypto necessary</td><td><span class="pill p-go">Yes</span></td><td>Commitment + payout verifiability (same caveat as sprint 1: ship escrow to make it fully real)</td></tr>
+  </table>
+
+  <h2>Risks (delta from sprint 1)</h2>
+  <table>
+    <tr><th>Category</th><th>Risk</th><th>Severity</th></tr>
+    <tr><td>Competition</td><td>Frame-raffle micro-space is occupied (Cast Picker, Superchain Raffle). Mitigation: compete on trust (on-chain prize commitment, auditable draw, payout trail) and Solana prizes — not on raffle mechanics.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Platform</td><td>Neynar is now both the protocol steward (acquired Jan 2026) and the canonical API — single-vendor dependency and pricing risk. Mitigation: adapter isolates it; Snapchain node access as fallback.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Market</td><td>Still zero organizer interviews — demand evidence is behavioral, not conversational. Run interviews in parallel with the build; don't let it block the adapter.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Product integrity</td><td>Unchanged: memo commitment + server seed until escrow/VRF ship.</td><td><span class="pill p-warn">Medium</span></td></tr>
+    <tr><td>Regulatory</td><td>Unchanged: sweepstakes official-rules hygiene.</td><td><span class="pill p-go">Low (devnet)</span></td></tr>
+  </table>
+
+  <h2>Integration-first assessment</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Farcaster adapter = pure integration</strong>: Neynar REST (cast lookup, reactions, follows, verified addresses) + SIWF auth. No on-chain program work.</li>
+      <li><strong>Base App reach = packaging, not code</strong>: publish a mini-app manifest (<code>/.well-known/farcaster.json</code>) so ChainDraw event pages render as mini-apps in Warpcast/Base App feeds. Follow-up task, not a blocker.</li>
+      <li><strong>Keep Mastodon adapter untouched</strong>; introduce a <code>platform</code> seam in schema + server functions.</li>
+    </ul>
+  </div>
+
+  <h2>Build-phase plan (approved scope)</h2>
+  <div class="card">
+    <ul>
+      <li>Schema migration: <code>platform</code> column, Farcaster cast fields, relax Mastodon-specific NOT NULLs.</li>
+      <li><code>farcaster.server.ts</code>: Neynar client — cast resolution, likes/recasts/follow checks, verified Solana address lookup.</li>
+      <li>Sign In With Farcaster: client auth flow + server signature verification + signed session cookie (mirrors the Mastodon session machinery).</li>
+      <li>Join + create flows branch on platform; entrant wallet auto-filled from verified address on Farcaster.</li>
+      <li>Parallel (human): 5 organizer conversations in Farcaster channels; dogfood one real giveaway after the adapter ships.</li>
+    </ul>
+  </div>
+
+  <p class="dim" style="margin-top:2rem">superstack <code>/validate-idea</code> sprint 2 · sources: Cast Picker (ETHGlobal), Superchain Raffle, Farcaster USDC engagement rewards coverage, Neynar developer docs/pricing, sprint-1 research corpus</p>
+</main>
+</body>
+</html>
