@@ -8,6 +8,105 @@ export type Database = {
   };
   public: {
     Tables: {
+      action_completions: {
+        Row: {
+          action_id: string;
+          entry_id: string | null;
+          event_id: string;
+          id: string;
+          platform_identity: string;
+          proof: Json;
+          verified_at: string;
+        };
+        Insert: {
+          action_id: string;
+          entry_id?: string | null;
+          event_id: string;
+          id?: string;
+          platform_identity: string;
+          proof?: Json;
+          verified_at?: string;
+        };
+        Update: {
+          action_id?: string;
+          entry_id?: string | null;
+          event_id?: string;
+          id?: string;
+          platform_identity?: string;
+          proof?: Json;
+          verified_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "action_completions_action_id_fkey";
+            columns: ["action_id"];
+            isOneToOne: false;
+            referencedRelation: "campaign_actions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "action_completions_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "action_completions_entry_id_fkey";
+            columns: ["entry_id"];
+            isOneToOne: false;
+            referencedRelation: "entries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      campaign_actions: {
+        Row: {
+          action_type: string;
+          created_at: string;
+          event_id: string;
+          id: string;
+          label: string;
+          platform: string;
+          required: boolean;
+          sort: number;
+          target_ref: Json;
+          target_url: string | null;
+        };
+        Insert: {
+          action_type: string;
+          created_at?: string;
+          event_id: string;
+          id?: string;
+          label?: string;
+          platform: string;
+          required?: boolean;
+          sort?: number;
+          target_ref?: Json;
+          target_url?: string | null;
+        };
+        Update: {
+          action_type?: string;
+          created_at?: string;
+          event_id?: string;
+          id?: string;
+          label?: string;
+          platform?: string;
+          required?: boolean;
+          sort?: number;
+          target_ref?: Json;
+          target_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "campaign_actions_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       entries: {
         Row: {
           created_at: string;
@@ -15,6 +114,7 @@ export type Database = {
           handle: string;
           handle_hash: string;
           id: string;
+          identities: Json;
           index: number;
           wallet: string;
         };
@@ -24,6 +124,7 @@ export type Database = {
           handle: string;
           handle_hash: string;
           id?: string;
+          identities?: Json;
           index: number;
           wallet: string;
         };
@@ -33,6 +134,7 @@ export type Database = {
           handle?: string;
           handle_hash?: string;
           id?: string;
+          identities?: Json;
           index?: number;
           wallet?: string;
         };
@@ -55,11 +157,11 @@ export type Database = {
           description: string;
           draw_seed: string | null;
           id: string;
-          mastodon_account_acct: string;
+          mastodon_account_acct: string | null;
           mastodon_account_id: string | null;
-          mastodon_instance: string;
-          mastodon_status_id: string;
-          mastodon_status_url: string;
+          mastodon_instance: string | null;
+          mastodon_status_id: string | null;
+          mastodon_status_url: string | null;
           num_winners: number;
           organizer_pubkey: string;
           prize_token: string;
@@ -79,11 +181,11 @@ export type Database = {
           description?: string;
           draw_seed?: string | null;
           id?: string;
-          mastodon_account_acct: string;
+          mastodon_account_acct?: string | null;
           mastodon_account_id?: string | null;
-          mastodon_instance: string;
-          mastodon_status_id: string;
-          mastodon_status_url: string;
+          mastodon_instance?: string | null;
+          mastodon_status_id?: string | null;
+          mastodon_status_url?: string | null;
           num_winners?: number;
           organizer_pubkey: string;
           prize_token?: string;
@@ -103,11 +205,11 @@ export type Database = {
           description?: string;
           draw_seed?: string | null;
           id?: string;
-          mastodon_account_acct?: string;
+          mastodon_account_acct?: string | null;
           mastodon_account_id?: string | null;
-          mastodon_instance?: string;
-          mastodon_status_id?: string;
-          mastodon_status_url?: string;
+          mastodon_instance?: string | null;
+          mastodon_status_id?: string | null;
+          mastodon_status_url?: string | null;
           num_winners?: number;
           organizer_pubkey?: string;
           prize_token?: string;

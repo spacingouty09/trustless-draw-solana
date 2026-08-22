@@ -33,7 +33,7 @@ export const getEvent = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const supabase = publicClient();
-    const [eventRes, entriesRes, winnersRes] = await Promise.all([
+    const [eventRes, entriesRes, winnersRes, actionsRes] = await Promise.all([
       supabase.from("events").select("*").eq("id", data.id).maybeSingle(),
       supabase
         .from("entries")
@@ -44,6 +44,11 @@ export const getEvent = createServerFn({ method: "GET" })
         .from("winners")
         .select("id, entry_id, share, payout_tx, created_at")
         .eq("event_id", data.id),
+      supabase
+        .from("campaign_actions")
+        .select("id, platform, action_type, target_url, target_ref, label, required, sort")
+        .eq("event_id", data.id)
+        .order("sort"),
     ]);
     if (eventRes.error) throw new Error(eventRes.error.message);
     if (!eventRes.data) throw new Error("Event not found");
@@ -51,6 +56,7 @@ export const getEvent = createServerFn({ method: "GET" })
       event: eventRes.data,
       entries: entriesRes.data ?? [],
       winners: winnersRes.data ?? [],
+      actions: actionsRes.data ?? [],
     };
   });
 

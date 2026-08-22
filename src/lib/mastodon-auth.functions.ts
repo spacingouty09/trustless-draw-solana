@@ -14,6 +14,7 @@ export const startMastodonLogin = createServerFn({ method: "POST" })
       .eq("id", data.event_id)
       .maybeSingle();
     if (error || !ev) throw new Error("Event not found");
+    if (!ev.mastodon_instance) throw new Error("This event has no Mastodon post to sign in against");
 
     const req = getRequest();
     const reqUrl = new URL(req.url);

@@ -81,7 +81,8 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
   const [form, setForm] = useState({
     title: "Launch giveaway",
     description: "",
-    mastodon_status_url: "",
+    platform: "mastodon" as "mastodon" | "farcaster",
+    post_url: "",
     require_favourite: true,
     require_boost: true,
     require_follow: false,
@@ -97,16 +98,14 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
       if (!form.require_favourite && !form.require_boost && !form.require_follow) {
         throw new Error("Pick at least one task for participants.");
       }
-      if (form.require_follow && !form.follow_url.trim()) {
-        throw new Error("Add the page URL participants should follow.");
-      }
       const cutoff_ts = new Date(Date.now() + form.cutoff_hours * 3600 * 1000).toISOString();
       return create({
         data: {
           organizer_pubkey: organizer,
           title: form.title,
           description: form.description,
-          mastodon_status_url: form.mastodon_status_url,
+          platform: form.platform,
+          post_url: form.post_url,
           require_favourite: form.require_favourite,
           require_boost: form.require_boost,
           require_follow: form.require_follow,
@@ -143,11 +142,34 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
           value={form.title}
           onChange={(v) => setForm((f) => ({ ...f, title: v }))}
         />
+        <div>
+          <span className="text-xs text-muted-foreground">Platform</span>
+          <div className="mt-1 grid grid-cols-2 gap-2">
+            {(["mastodon", "farcaster"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, platform: p }))}
+                className={`h-9 rounded-md border text-sm font-medium capitalize transition ${
+                  form.platform === p
+                    ? "border-primary bg-primary/15 text-foreground"
+                    : "border-input bg-background text-muted-foreground hover:bg-secondary/60"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
         <TF
-          label="Mastodon post URL"
-          placeholder="https://mastodon.social/@you/123…"
-          value={form.mastodon_status_url}
-          onChange={(v) => setForm((f) => ({ ...f, mastodon_status_url: v }))}
+          label={form.platform === "farcaster" ? "Farcaster cast URL" : "Mastodon post URL"}
+          placeholder={
+            form.platform === "farcaster"
+              ? "https://farcaster.xyz/you/0xabc…"
+              : "https://mastodon.social/@you/123…"
+          }
+          value={form.post_url}
+          onChange={(v) => setForm((f) => ({ ...f, post_url: v }))}
         />
         <TF
           label="Description"
@@ -165,29 +187,15 @@ function CreateEventCard({ organizer, onCreated }: { organizer: string; onCreate
               onChange={(v) => setForm((f) => ({ ...f, require_favourite: v }))}
             />
             <CheckRow
-              label="Share the post"
+              label={form.platform === "farcaster" ? "Recast the cast" : "Share the post"}
               checked={form.require_boost}
               onChange={(v) => setForm((f) => ({ ...f, require_boost: v }))}
             />
             <CheckRow
-              label="Follow page"
+              label="Follow the post author"
               checked={form.require_follow}
               onChange={(v) => setForm((f) => ({ ...f, require_follow: v }))}
             />
-            {form.require_follow && (
-              <div className="pl-7">
-                <input
-                  type="url"
-                  placeholder="https://mastodon.social/@yourpage"
-                  value={form.follow_url}
-                  onChange={(e) => setForm((f) => ({ ...f, follow_url: e.target.value }))}
-                  className="block h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Page URL participants need to follow.
-                </p>
-              </div>
-            )}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2">

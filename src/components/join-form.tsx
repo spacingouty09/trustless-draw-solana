@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { joinEvent } from "@/lib/join.functions";
 import {
@@ -8,8 +8,22 @@ import {
   signOutMastodon,
   startMastodonLogin,
 } from "@/lib/mastodon-auth.functions";
+import {
+  getFarcasterSession,
+  signOutFarcaster,
+  verifyFarcasterLogin,
+} from "@/lib/farcaster-auth.functions";
+import { ClientOnly } from "@/components/client-only";
+import type { FarcasterSignInResult } from "@/components/farcaster-signin";
 
-export function JoinForm({ eventId }: { eventId: string }) {
+// Browser-only (relay + QR flow) — never let auth-kit into the SSR bundle.
+const FarcasterSignIn = lazy(() => import("@/components/farcaster-signin"));
+
+export function JoinForm({ eventId, platforms }: { eventId: string; platforms?: string[] }) {
+  const needed = platforms && platforms.length > 0 ? platforms : ["mastodon"];
+  const needsMastodon = needed.includes("mastodon");
+  const needsFarcaster = needed.includes("farcaster");
+
   const [wallet, setWallet] = useState("");
   const [retryNotice, setRetryNotice] = useState<{ message: string; missing: string[] } | null>(
     null,
@@ -18,15 +32,26 @@ export function JoinForm({ eventId }: { eventId: string }) {
   const qc = useQueryClient();
   const join = useServerFn(joinEvent);
   const startLogin = useServerFn(startMastodonLogin);
-  const signOut = useServerFn(signOutMastodon);
-  const fetchSession = useServerFn(getMastodonSession);
+  const signOutMd = useServerFn(signOutMastodon);
+  const fetchMdSession = useServerFn(getMastodonSession);
+  const fetchFcSession = useServerFn(getFarcasterSession);
+  const verifyFcLogin = useServerFn(verifyFarcasterLogin);
+  const signOutFc = useServerFn(signOutFarcaster);
 
-  const sessionQ = useQuery({
+  const mdSessionQ = useQuery({
     queryKey: ["mastodon-session"],
-    queryFn: () => fetchSession(),
+    queryFn: () => fetchMdSession(),
     refetchOnWindowFocus: true,
+    enabled: needsMastodon,
   });
-  const session = sessionQ.data;
+  const fcSessionQ = useQuery({
+    queryKey: ["farcaster-session"],
+    queryFn: () => fetchFcSession(),
+    refetchOnWindowFocus: true,
+    enabled: needsFarcaster,
+  });
+  const mdSession = needsMastodon ? mdSessionQ.data : undefined;
+  const fcSession = needsFarcaster ? fcSessionQ.data : undefined;
 
   const loginMutation = useMutation({
     mutationFn: () => startLogin({ data: { event_id: eventId } }),
@@ -40,7 +65,6 @@ export function JoinForm({ eventId }: { eventId: string }) {
           return;
         }
       } catch {
-        // Cross-origin top — fall back to opening in a new tab.
         window.open(authorize_url, "_blank", "noopener");
         return;
       }
@@ -49,16 +73,41 @@ export function JoinForm({ eventId }: { eventId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const signOutMutation = useMutation({
-    mutationFn: () => signOut(),
+  const fcVerifyMutation = useMutation({
+    mutationFn: (res: FarcasterSignInResult) =>
+      verifyFcLogin({
+        data: {
+          message: res.message,
+          signature: res.signature,
+          fid: res.fid,
+          nonce: res.nonce,
+        },
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["farcaster-session"] });
+      toast.success("Farcaster account linked");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const signOutMdMutation = useMutation({
+    mutationFn: () => signOutMd(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mastodon-session"] });
       setRetryNotice(null);
     },
   });
+  const signOutFcMutation = useMutation({
+    mutationFn: () => signOutFc(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["farcaster-session"] });
+      setRetryNotice(null);
+    },
+  });
 
   const enter = useMutation({
-    mutationFn: (vars: { wallet: string }) => join({ data: { event_id: eventId, ...vars } }),
+    mutationFn: (vars: { wallet?: string }) =>
+      join({ data: { event_id: eventId, ...(vars.wallet ? { wallet: vars.wallet } : {}) } }),
     onSuccess: (res) => {
       if (res.ok) {
         toast.success(`Verified ✓ — you're entry #${res.entry.index + 1}`);
@@ -78,12 +127,17 @@ export function JoinForm({ eventId }: { eventId: string }) {
     setRetryNotice(null);
   };
 
+  const signedInEverywhere = (!needsMastodon || !!mdSession) && (!needsFarcaster || !!fcSession);
+  const autoWallet = fcSession?.sol_address ?? null;
+  const hasWallet = !!wallet.trim() || !!autoWallet;
+  const canSubmit = signedInEverywhere && hasWallet && !enter.isPending;
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!session) return;
-        enter.mutate({ wallet });
+        if (!signedInEverywhere) return;
+        enter.mutate({ wallet: wallet.trim() || undefined });
       }}
       className="rounded-2xl border border-border/70 bg-card/60 p-6"
     >
@@ -91,50 +145,88 @@ export function JoinForm({ eventId }: { eventId: string }) {
         Enter the giveaway
       </h3>
       <p className="mt-1 text-xs text-muted-foreground">
-        Sign in with Mastodon to prove who you are. We push the prize to your wallet if you win.
+        Sign in to prove who you are. We push the prize to your wallet if you win.
       </p>
 
-      <div className="mt-4">
-        {sessionQ.isLoading ? (
-          <div className="h-11 animate-pulse rounded-lg border border-input bg-background/40" />
-        ) : session ? (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-3 py-2.5">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Signed in
-              </div>
-              <div className="truncate text-sm font-medium">@{session.handle}</div>
-            </div>
+      {needsMastodon && (
+        <div className="mt-4">
+          {mdSessionQ.isLoading ? (
+            <div className="h-11 animate-pulse rounded-lg border border-input bg-background/40" />
+          ) : mdSession ? (
+            <SignedInRow
+              label="Mastodon"
+              handle={`@${mdSession.handle}`}
+              onSignOut={() => signOutMdMutation.mutate()}
+              signOutPending={signOutMdMutation.isPending}
+            />
+          ) : (
             <button
               type="button"
-              onClick={() => signOutMutation.mutate()}
-              disabled={signOutMutation.isPending}
-              className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40"
+              onClick={() => loginMutation.mutate()}
+              disabled={loginMutation.isPending}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background font-medium transition hover:bg-secondary/60 disabled:opacity-40"
             >
-              Sign out
+              <MastodonGlyph />
+              {loginMutation.isPending ? "Redirecting…" : "Sign in with Mastodon"}
             </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => loginMutation.mutate()}
-            disabled={loginMutation.isPending}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background font-medium transition hover:bg-secondary/60 disabled:opacity-40"
-          >
-            <MastodonGlyph />
-            {loginMutation.isPending ? "Redirecting…" : "Sign in with Mastodon"}
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {needsFarcaster && (
+        <div className="mt-3">
+          {fcSessionQ.isLoading ? (
+            <div className="h-11 animate-pulse rounded-lg border border-input bg-background/40" />
+          ) : fcSession ? (
+            <SignedInRow
+              label="Farcaster"
+              handle={`@${fcSession.username}${fcSession.sol_address ? " · wallet verified" : ""}`}
+              onSignOut={() => signOutFcMutation.mutate()}
+              signOutPending={signOutFcMutation.isPending}
+            />
+          ) : (
+            <ClientOnly
+              fallback={
+                <div className="h-11 animate-pulse rounded-lg border border-input bg-background/40" />
+              }
+            >
+              <Suspense
+                fallback={
+                  <div className="h-11 animate-pulse rounded-lg border border-input bg-background/40" />
+                }
+              >
+                <div className="fc-signin">
+                  <FarcasterSignIn
+                    onSignedIn={(res) => fcVerifyMutation.mutate(res)}
+                    onError={(msg) => toast.error(msg)}
+                  />
+                  {fcVerifyMutation.isPending && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">Verifying signature…</p>
+                  )}
+                </div>
+              </Suspense>
+            </ClientOnly>
+          )}
+        </div>
+      )}
 
       <div className="mt-3">
         <Field
-          label="Your Solana wallet (devnet)"
-          placeholder="A Solana pubkey"
+          label={
+            autoWallet
+              ? "Your Solana wallet (devnet) — auto-filled from Farcaster"
+              : "Your Solana wallet (devnet)"
+          }
+          placeholder={autoWallet ?? "A Solana pubkey"}
           value={wallet}
           onChange={updateWallet}
           mono
         />
+        {autoWallet && !wallet.trim() && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            We'll pay your verified Farcaster address unless you enter a different one.
+          </p>
+        )}
       </div>
 
       {retryNotice && (
@@ -142,8 +234,8 @@ export function JoinForm({ eventId }: { eventId: string }) {
           <p>{retryNotice.message}</p>
           <button
             type="button"
-            onClick={() => enter.mutate({ wallet })}
-            disabled={enter.isPending || !session || !wallet}
+            onClick={() => enter.mutate({ wallet: wallet.trim() || undefined })}
+            disabled={!canSubmit}
             className="mt-2 inline-flex h-8 items-center justify-center rounded-md border border-amber-400/50 px-3 text-xs font-medium text-amber-100 transition hover:bg-amber-500/20 disabled:opacity-40"
           >
             {enter.isPending ? "Re-checking…" : "Try again"}
@@ -153,12 +245,43 @@ export function JoinForm({ eventId }: { eventId: string }) {
 
       <button
         type="submit"
-        disabled={enter.isPending || !session || !wallet}
+        disabled={!canSubmit}
         className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg bg-gradient-brand font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-40"
       >
-        {enter.isPending ? "Verifying on Mastodon…" : "Verify & enter"}
+        {enter.isPending ? "Verifying actions…" : "Verify & enter"}
       </button>
     </form>
+  );
+}
+
+function SignedInRow({
+  label,
+  handle,
+  onSignOut,
+  signOutPending,
+}: {
+  label: string;
+  handle: string;
+  onSignOut: () => void;
+  signOutPending: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-3 py-2.5">
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {label} — signed in
+        </div>
+        <div className="truncate text-sm font-medium">{handle}</div>
+      </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        disabled={signOutPending}
+        className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40"
+      >
+        Sign out
+      </button>
+    </div>
   );
 }
 

@@ -41,10 +41,21 @@ export const Route = createFileRoute("/event/$id")({
 function EventPage() {
   const { id } = Route.useParams();
   const { data } = useSuspenseQuery(eventQuery(id));
-  const { event, entries, winners } = data;
+  const { event, entries, winners, actions } = data;
 
   const isOpen = event.status === "open" && new Date(event.cutoff_ts).getTime() > Date.now();
   const isSettled = event.status === "settled";
+
+  const requiredActions = (actions ?? []).filter((a) => a.required);
+  const platforms =
+    requiredActions.length > 0
+      ? [...new Set(requiredActions.map((a) => a.platform))]
+      : ["mastodon"];
+  const sourceUrl =
+    requiredActions.find((a) => a.target_url)?.target_url ?? event.mastodon_status_url;
+  const sourceLabel = platforms.includes("farcaster") && !platforms.includes("mastodon")
+    ? "Open on Farcaster ↗"
+    : "Open on Mastodon ↗";
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
@@ -74,13 +85,13 @@ function EventPage() {
           {isSettled ? (
             <WinnersPanel event={event} entries={entries} winners={winners} />
           ) : (
-            <RequirementsChecklist event={event} />
+            <RequirementsChecklist event={event} actions={actions} />
           )}
           <EntriesPanel entries={entries} />
         </div>
         <div className="space-y-6">
           {isOpen ? (
-            <JoinForm eventId={event.id} />
+            <JoinForm eventId={event.id} platforms={platforms} />
           ) : (
             <div className="rounded-2xl border border-border/70 bg-card/60 p-6 text-sm text-muted-foreground">
               {isSettled
@@ -90,18 +101,20 @@ function EventPage() {
                   : "Entry window closed. Awaiting draw."}
             </div>
           )}
-          <a
-            href={event.mastodon_status_url}
-            target="_blank"
-            rel="noreferrer"
-            className="block rounded-2xl border border-border/70 bg-card/60 p-6 text-sm hover:border-primary/50"
-          >
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">
-              Source post
-            </div>
-            <div className="mt-1 break-all font-mono text-xs">{event.mastodon_status_url}</div>
-            <div className="mt-2 text-xs text-primary">Open on Mastodon ↗</div>
-          </a>
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded-2xl border border-border/70 bg-card/60 p-6 text-sm hover:border-primary/50"
+            >
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                Source post
+              </div>
+              <div className="mt-1 break-all font-mono text-xs">{sourceUrl}</div>
+              <div className="mt-2 text-xs text-primary">{sourceLabel}</div>
+            </a>
+          )}
         </div>
       </div>
     </div>

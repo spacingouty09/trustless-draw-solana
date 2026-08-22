@@ -11,9 +11,10 @@ const createSchema = z.object({
   organizer_pubkey: z.string().min(32),
   title: z.string().min(2).max(140),
   description: z.string().max(500).default(""),
-  mastodon_status_url: z.string().url(),
-  require_favourite: z.boolean(),
-  require_boost: z.boolean(),
+  platform: z.enum(["mastodon", "farcaster"]).default("mastodon"),
+  post_url: z.string().url(), // Mastodon status URL or Farcaster cast URL
+  require_favourite: z.boolean(), // like
+  require_boost: z.boolean(), // repost / recast
   require_follow: z.boolean(),
   prize_token: z.string().default("USDC"),
   prize_total: z.number().positive(),
@@ -21,23 +22,108 @@ const createSchema = z.object({
   cutoff_ts: z.string(), // ISO
 });
 
+type ActionInsert = {
+  platform: string;
+  action_type: string;
+  target_url: string | null;
+  target_ref: Record<string, unknown>;
+  label: string;
+  sort: number;
+};
+
 export const createEvent = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => createSchema.parse(d))
   .handler(async ({ data }) => {
-    const { resolveStatus } = await import("./mastodon.server");
-    const status = await resolveStatus(data.mastodon_status_url);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Resolve the campaign post on its platform and build the action checklist.
+    let legacyCols: Record<string, unknown> = {};
+    const actions: ActionInsert[] = [];
+
+    if (data.platform === "mastodon") {
+      const { resolveStatus } = await import("./mastodon.server");
+      const status = await resolveStatus(data.post_url);
+      legacyCols = {
+        mastodon_status_url: data.post_url,
+        mastodon_instance: status.instance,
+        mastodon_status_id: status.id,
+        mastodon_account_acct: status.account.acct,
+        mastodon_account_id: status.account.id,
+      };
+      const ref = { instance: status.instance, status_id: status.id, status_url: data.post_url };
+      if (data.require_favourite)
+        actions.push({
+          platform: "mastodon",
+          action_type: "like",
+          target_url: data.post_url,
+          target_ref: ref,
+          label: "Favourite the post",
+          sort: 0,
+        });
+      if (data.require_boost)
+        actions.push({
+          platform: "mastodon",
+          action_type: "repost",
+          target_url: data.post_url,
+          target_ref: ref,
+          label: "Boost the post",
+          sort: 1,
+        });
+      if (data.require_follow)
+        actions.push({
+          platform: "mastodon",
+          action_type: "follow",
+          target_url: `https://${status.instance}/@${status.account.acct}`,
+          target_ref: {
+            instance: status.instance,
+            account_id: status.account.id,
+            acct: status.account.acct,
+          },
+          label: `Follow @${status.account.acct}`,
+          sort: 2,
+        });
+    } else {
+      const { resolveCast } = await import("./farcaster.server");
+      const cast = await resolveCast(data.post_url);
+      const ref = { cast_hash: cast.hash, cast_url: data.post_url, author_fid: cast.author.fid };
+      if (data.require_favourite)
+        actions.push({
+          platform: "farcaster",
+          action_type: "like",
+          target_url: data.post_url,
+          target_ref: ref,
+          label: "Like the cast",
+          sort: 0,
+        });
+      if (data.require_boost)
+        actions.push({
+          platform: "farcaster",
+          action_type: "repost",
+          target_url: data.post_url,
+          target_ref: ref,
+          label: "Recast the cast",
+          sort: 1,
+        });
+      if (data.require_follow)
+        actions.push({
+          platform: "farcaster",
+          action_type: "follow",
+          target_url: `https://farcaster.xyz/${cast.author.username}`,
+          target_ref: { target_fid: cast.author.fid, username: cast.author.username },
+          label: `Follow @${cast.author.username}`,
+          sort: 2,
+        });
+    }
+
+    if (actions.length === 0) throw new Error("Pick at least one task for participants");
+
     const { data: row, error } = await supabaseAdmin
       .from("events")
       .insert({
         organizer_pubkey: data.organizer_pubkey,
         title: data.title,
         description: data.description ?? "",
-        mastodon_status_url: data.mastodon_status_url,
-        mastodon_instance: status.instance,
-        mastodon_status_id: status.id,
-        mastodon_account_acct: status.account.acct,
-        mastodon_account_id: status.account.id,
+        ...legacyCols,
         require_favourite: data.require_favourite,
         require_boost: data.require_boost,
         require_follow: data.require_follow,
@@ -50,6 +136,19 @@ export const createEvent = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
+
+    const { error: actErr } = await supabaseAdmin.from("campaign_actions").insert(
+      actions.map((a) => ({
+        ...a,
+        target_ref: a.target_ref as import("@/integrations/supabase/types").Json,
+        event_id: row.id,
+        required: true,
+      })),
+    );
+    if (actErr) {
+      await supabaseAdmin.from("events").delete().eq("id", row.id);
+      throw new Error(actErr.message);
+    }
     return row;
   });
 
