@@ -48,6 +48,34 @@ same logic.
 Participant 2 did not win and was never paid — nobody claimed on their behalf, and the program has
 no path for anyone but a winning entry's own participant address to receive funds.
 
+## How winners actually get paid
+
+`claim_prize` is a separate instruction from the draw itself, and it's worth understanding why:
+`resolve_draw` only decides *who* won (writes `Campaign.winner_indices`) — it doesn't move any
+money. Payout is a distinct, per-winner step, on purpose:
+
+- **Permissionless, per winner.** Anyone can call `claim_prize` on behalf of a specific winning
+  `Entry` — the winner doesn't have to click anything or even be online. In transactions #7 and #8
+  above, the same `cranker` keypair that requested and resolved the draw also triggered both
+  payouts; the winning *participants themselves never signed or paid a single transaction* in this
+  campaign. Funds only ever land on `entry.participant` — the `claim_prize` caller can be anyone,
+  but the destination is fixed by the on-chain `Entry` record, not by whoever happens to call it.
+- **Exact split, no rounding surprises.** Each payout is `prize_amount / num_winners` in integer
+  lamports — here, `20_000_000 / 2 = 10_000_000` lamports (0.01 SOL) per winner, matching the
+  `+0.01 SOL` observed on both participant balances. Any remainder from an uneven split (e.g. an
+  odd `prize_amount`) simply stays in the campaign vault rather than being distributed unevenly.
+- **Can't be double-paid.** Each `Entry` account has a `claimed` flag the program sets on first
+  successful payout; a second `claim_prize` call on the same entry is rejected outright
+  (`AlreadyClaimed`) rather than silently doing nothing or double-spending the vault — this is
+  enforced by the program, not by whoever happens to be running the cranker.
+- **Can't be paid to the wrong wallet.** The instruction's `participant` account is constrained to
+  equal `entry.participant` — there's no way to redirect a winner's payout to a different address,
+  regardless of who submits the `claim_prize` transaction or what account list they attempt to pass.
+
+In other words: once a draw resolves, payout is a mechanical, permissionless cleanup step that
+requires no trust in the campaign organizer, the cranker, or ChainDraw's own backend — anyone
+can settle every winner's payout by simply calling `claim_prize` once per winning entry.
+
 ## Recompute the draw yourself — the actual trust claim
 
 The draw isn't "trust us, the backend picked fairly" — it's independently recomputable by anyone
