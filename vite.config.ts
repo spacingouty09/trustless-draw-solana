@@ -5,21 +5,19 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { createRequire } from "node:module";
 
 // In the browser build, force `buffer` / `process` / `events` to resolve to
 // their npm browser packages instead of Vite's empty `__vite-browser-external`
 // stub. Without this, safe-buffer (transitive of the Solana wallet stack)
 // does `require('buffer').Buffer` and crashes with
 // "Cannot read properties of undefined (reading 'from')" during module init.
-const requireFromHere = createRequire(import.meta.url);
 const clientNodeShimAlias = {
   name: "chaindraw:client-node-shim-alias",
   enforce: "pre" as const,
-  resolveId(
-    this: { environment?: { name?: string } },
+  async resolveId(
+    this: { environment?: { name?: string }; resolve: (...args: unknown[]) => Promise<unknown> },
     id: string,
-    _importer: string | undefined,
+    importer: string | undefined,
     opts?: { ssr?: boolean },
   ) {
     const envName = this.environment?.name;
@@ -34,11 +32,15 @@ const clientNodeShimAlias = {
     };
     const target = map[id];
     if (!target) return null;
-    try {
-      return requireFromHere.resolve(target);
-    } catch {
-      return null;
-    }
+    // Delegate back into the plugin pipeline (skipSelf avoids re-entering this
+    // hook) instead of returning requireFromHere.resolve()'s raw absolute
+    // path directly. Returning the raw path bypasses Vite's dep optimizer —
+    // since this hook has enforce:"pre" it runs before vite:resolve's own
+    // bare-specifier redirect to the pre-bundled chunk, so the browser was
+    // getting served buffer's untranspiled CJS source (`require is not
+    // defined`). Routing through this.resolve() lets the optimizer plugin
+    // still intercept and hand back the pre-bundled ESM version.
+    return this.resolve(target, importer, { skipSelf: true });
   },
 };
 
