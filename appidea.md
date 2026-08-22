@@ -19,7 +19,7 @@ Gleam.io proved the multi-platform action-checklist model (~1B+ entries processe
 
 ## The product model (Gleam-style, web3-settled)
 
-- **Campaign** — prize (token + total), number of winners, cutoff, and an **on-chain prize commitment** made before entries open.
+- **Campaign** — prize (token + total), number of winners, an ending trigger (time-based cutoff, or response-based: closes once a target entry count is reached), and an **on-chain prize commitment** made before entries open.
 - **Action checklist** — each campaign lists required (and later, bonus) actions **across multiple platforms**: "❤️ this Farcaster cast", "🔁 boost this Mastodon post", "follow us on Bluesky", "subscribe on YouTube", "repost on Weibo". Action types: like/favourite, share/repost, follow/subscribe/join, comment-with-code, post/tag.
 - **Participant** — links one identity per platform they need (sign-in per platform) plus one Solana payout wallet; each action is verified independently against the platform's API and recorded. All required actions verified → entered.
 - **Lottery ticket = NFT** *(designed, not yet built — see architecture.md)* — once verified, an NFT is minted to the participant's wallet as their entry, gaslessly: the participant only signs consent (proves they control the payout address), the campaign's backend/authority pays the mint fee. The ticket is independently auditable on any explorer — the whole point of putting entries on-chain instead of only in a database.
