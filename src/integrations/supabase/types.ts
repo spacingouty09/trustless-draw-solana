@@ -148,6 +148,51 @@ export type Database = {
           },
         ];
       };
+      interest_signups: {
+        Row: {
+          id: string;
+          email: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      product_suggestions: {
+        Row: {
+          id: string;
+          message: string;
+          contact_email: string | null;
+          created_at: string;
+          emailed_at: string | null;
+          email_error: string | null;
+        };
+        Insert: {
+          id?: string;
+          message: string;
+          contact_email?: string | null;
+          created_at?: string;
+          emailed_at?: string | null;
+          email_error?: string | null;
+        };
+        Update: {
+          id?: string;
+          message?: string;
+          contact_email?: string | null;
+          created_at?: string;
+          emailed_at?: string | null;
+          email_error?: string | null;
+        };
+        Relationships: [];
+      };
       events: {
         Row: {
           commit_tx: string | null;

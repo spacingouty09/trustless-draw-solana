@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as OrganizerRouteImport } from './routes/organizer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrganizerIndexRouteImport } from './routes/organizer.index'
@@ -17,6 +18,11 @@ import { Route as EventIdRouteImport } from './routes/event.$id'
 import { Route as ApiPublicSolanaRpcRouteImport } from './routes/api/public/solana-rpc'
 import { Route as ApiPublicMastodonCallbackRouteImport } from './routes/api/public/mastodon/callback'
 
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizerRoute = OrganizerRouteImport.update({
   id: '/organizer',
   path: '/organizer',
@@ -57,6 +63,7 @@ const ApiPublicMastodonCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/organizer': typeof OrganizerRouteWithChildren
+  '/support': typeof SupportRoute
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/support': typeof SupportRoute
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer': typeof OrganizerIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/organizer': typeof OrganizerRouteWithChildren
+  '/support': typeof SupportRoute
   '/event/$id': typeof EventIdRoute
   '/organizer/$id': typeof OrganizerIdRoute
   '/organizer/': typeof OrganizerIndexRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/organizer'
+    | '/support'
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/support'
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/organizer'
+    | '/support'
     | '/event/$id'
     | '/organizer/$id'
     | '/organizer/'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrganizerRoute: typeof OrganizerRouteWithChildren
+  SupportRoute: typeof SupportRoute
   EventIdRoute: typeof EventIdRoute
   ApiPublicSolanaRpcRoute: typeof ApiPublicSolanaRpcRoute
   ApiPublicMastodonCallbackRoute: typeof ApiPublicMastodonCallbackRoute
@@ -120,6 +133,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizer': {
       id: '/organizer'
       path: '/organizer'
@@ -189,6 +209,7 @@ const OrganizerRouteWithChildren = OrganizerRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrganizerRoute: OrganizerRouteWithChildren,
+  SupportRoute: SupportRoute,
   EventIdRoute: EventIdRoute,
   ApiPublicSolanaRpcRoute: ApiPublicSolanaRpcRoute,
   ApiPublicMastodonCallbackRoute: ApiPublicMastodonCallbackRoute,

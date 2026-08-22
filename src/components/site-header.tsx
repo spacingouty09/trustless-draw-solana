@@ -39,6 +39,13 @@ export function SiteHeader() {
           >
             Organizer
           </Link>
+          <Link
+            to="/support"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-foreground" }}
+          >
+            Support
+          </Link>
           <ClientOnly fallback={<WalletButtonFallback />}>
             <Suspense fallback={<WalletButtonFallback />}>
               <WalletButton />
