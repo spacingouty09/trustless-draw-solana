@@ -95,7 +95,7 @@ function renderSlide(slide: Slide, i: number) {
           <SlideEyebrow>{eyebrow}</SlideEyebrow>
           <SlideHeadline id={headingId}>{slide.headline}</SlideHeadline>
           <div className="mt-10 overflow-x-auto rounded-xl border border-border bg-card/60 backdrop-blur">
-            <table className="w-full min-w-[34rem] text-left text-sm">
+            <table className="w-full min-w-[40rem] text-left text-sm">
               <caption className="sr-only">Feature comparison: {slide.columns.join(", ")}</caption>
               <thead>
                 <tr className="border-b border-border">
