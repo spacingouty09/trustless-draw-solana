@@ -11,6 +11,7 @@ import {
   SlideSection,
 } from "@/components/slides/slide-section";
 import { SlideDots } from "@/components/slides/slide-dots";
+import { useSlideKeys } from "@/components/slides/use-slide-keys";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +35,7 @@ function Home() {
     root.classList.add("snap-page");
     return () => root.classList.remove("snap-page");
   }, []);
+  useSlideKeys();
 
   return (
     <>
@@ -196,7 +198,7 @@ function Hero({
         aria-hidden="true"
         className="mt-16 hidden items-center gap-2 font-display text-[11px] uppercase tracking-[0.3em] text-muted-foreground/70 md:flex"
       >
-        Scroll <ArrowDown className="h-3 w-3 motion-safe:animate-bounce" />
+        Scroll or press ↓ <ArrowDown className="h-3 w-3 motion-safe:animate-bounce" />
       </div>
     </div>
   );
