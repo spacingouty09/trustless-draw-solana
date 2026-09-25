@@ -4,16 +4,23 @@
 //     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import { createRequire } from "node:module";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+const requireFromHere = createRequire(import.meta.url);
 
 // In the browser build, force `buffer` / `process` / `events` to resolve to
 // their npm browser packages instead of Vite's empty `__vite-browser-external`
 // stub. Without this, safe-buffer (transitive of the Solana wallet stack)
 // does `require('buffer').Buffer` and crashes with
 // "Cannot read properties of undefined (reading 'from')" during module init.
+let isBuild = false;
 const clientNodeShimAlias = {
   name: "chaindraw:client-node-shim-alias",
   enforce: "pre" as const,
+  configResolved(config: { command: string }) {
+    isBuild = config.command === "build";
+  },
   async resolveId(
     this: { environment?: { name?: string }; resolve: (...args: unknown[]) => Promise<unknown> },
     id: string,
@@ -40,6 +47,12 @@ const clientNodeShimAlias = {
     // getting served buffer's untranspiled CJS source (`require is not
     // defined`). Routing through this.resolve() lets the optimizer plugin
     // still intercept and hand back the pre-bundled ESM version.
+    // Production builds have no dep optimizer, and Vite 8's resolver rewrites
+    // "buffer/" to the builtin "node:buffer" and re-enters this hook, which
+    // skipSelf doesn't cover — an infinite resolve loop that hangs the build
+    // at "transforming...". Rolldown bundles CJS natively, so hand it the
+    // file path directly.
+    if (isBuild) return requireFromHere.resolve(target);
     return this.resolve(target, importer, { skipSelf: true });
   },
 };
@@ -98,6 +111,7 @@ const solanaSsrShim = {
       "export const WalletProvider = ({ children }) => children;",
       "export const PhantomWalletAdapter = noop;",
       "export const SolflareWalletAdapter = noop;",
+      "export const WalletNotReadyError = stub;",
     ].join("\n");
   },
 };
