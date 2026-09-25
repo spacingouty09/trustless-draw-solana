@@ -16,7 +16,7 @@ import { useSlideKeys } from "@/components/slides/use-slide-keys";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: `${PRODUCT_NAME} — Promises you can check.` },
+      { title: `${PRODUCT_NAME} — Get new creators from 0 to 1.` },
       {
         name: "description",
         content:
@@ -181,7 +181,7 @@ function Hero({
       </p>
       <h1
         id={headingId}
-        className="mt-4 max-w-3xl font-display text-3xl font-semibold tracking-tight sm:text-5xl lg:text-6xl"
+        className="mt-4 max-w-4xl font-display text-3xl font-semibold tracking-tight sm:text-5xl lg:text-6xl"
       >
         <span className="text-gradient">{slide.headline}</span>
       </h1>

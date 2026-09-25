@@ -58,8 +58,8 @@ export const SLIDES: readonly Slide[] = [
     kind: "hero",
     label: "Intro",
     eyebrow: "Verifiable · On-chain · Agent-ready",
-    headline: "Promises you can check.",
-    body: "Get new creators from 0 to 1. Giveaways where the prize is locked before entry, every action is verified, and the winner is proven — not announced.",
+    headline: "Get new creators from 0\u00a0to\u00a01.",
+    body: "Giveaways where the prize is locked before entry, every action is verified, and the winner is proven — then paid automatically, with nothing to claim.",
   },
   {
     id: "slide-01",
