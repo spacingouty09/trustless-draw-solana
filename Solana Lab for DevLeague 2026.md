@@ -1,9 +1,9 @@
-# ChainDraw — Solana Lab for DevLeague 2026 (Payments × CX tracks)
+# Fairseed (formerly ChainDraw) — Solana Lab for DevLeague 2026 (Payments × CX tracks)
 
 **1. Title / Hook**
-- ChainDraw — "a web3 Gleam.io: verifiable multi-platform giveaways"
+- Fairseed — "a web3 Gleam.io: verifiable multi-platform giveaways"
 - Submitting for: Payments × CX tracks, Solana Lab for DevLeague 2026
-- Live devnet: luckydraw.y09.space
+- Anchor program live on Solana devnet — full campaign already run end-to-end, every transaction public
 
 **2. The Problem**
 - Social giveaways run on trust, not proof
@@ -13,48 +13,68 @@
 - Black-box draws quietly erode brand trust
 
 **3. The Solution**
-- Prize committed on-chain *before* entries open
+- Prize escrowed on-chain *before* entries open — in a wallet nobody holds a key to
 - Multi-platform action checklist, each action API-verified
-- Auditable draw + public payout trail
+- Draw anyone can recompute; payout anyone can trigger
 - Same simplicity as Gleam.io for organizers — but trustless
 
-**4. Payments Track — On-Chain Commitment & Escrow**
-- Prize escrowed on-chain before a single entry — not a promise
-- Anchor program (designed): Campaign PDA vault, Entry PDA per participant
-- Permissionless draw + payout — anyone can trigger and verify
-- No custodial backend wallet ever holds prize funds
-- Public, replayable payout tx trail
-- Payout is automatic, pushed straight to the winner's wallet — no "claim" step, no DM, nothing to phish
-- Kills the #1 giveaway scam pattern: fake "you won!" messages asking for a seed phrase or "gas fee"
-- Nothing to click, connect, or hand over — the win is a transaction signature, not an invitation to a scammer
+**4. Payments Track — Escrow & Automatic Payout**
+- Prize sits in a program-controlled Campaign PDA — no private key exists for it, not even the organizer's
+- Address is public from creation, so anyone can confirm the prize is genuinely funded before entering
+- Payout is permissionless and per-winner: anyone can trigger it on a winner's behalf
+- **Winners never sign or pay for anything** — in the devnet run, both winners received their prize without submitting a single transaction
+- Funds can only land on the winner's own wallet — destination is fixed by the on-chain entry record, not by whoever calls
+- Can't be double-paid: an on-chain `claimed` flag rejects a second attempt outright
+- Kills the #1 giveaway scam: no claim link, no DM, nothing for a phisher to insert themselves into
 
 **5. CX Track — Verified Multi-Platform Engagement**
-- One place to run campaigns across fragmented socials (Mastodon, Farcaster, planned Bluesky/YouTube/Telegram)
+- One place to run campaigns across fragmented socials (Mastodon, Farcaster live; Bluesky/YouTube/Telegram planned)
 - 3 verification models: public-data, entrant-OAuth, organizer-bot
-- Real, API-checked engagement replaces vanity/bot-inflated metrics
-- Funnel analytics (viewed → linked → verified → entered) as an organizer selling point
+- Every counted action is checked against the platform's own API — no screenshots or self-reported entries
+- Organizer picks the ending trigger: a time cutoff, or a target entry count that closes the campaign the moment it's hit
+- Closing is enforced by the program — not a moment the organizer gets to choose
 
-**6. Market — TAM / SAM / SOM**
+**6. Proven on Devnet — Not a Slide Deck Promise**
+- Program deployed to devnet: `mVfGuxEb9jWRWpf2n7wzRmEESqdvCWaBx9zQCALuJWz`
+- A complete campaign already run: create → 3 entries → draw → 2 payouts, all 8 transactions public
+- The draw commits to a *future* Solana slot before that slot's outcome exists anywhere — nobody, including the creator, can know it in advance
+- Anyone can recompute the winners from two public on-chain values and check they match
+- Honest status: this is delayed commit-reveal, not yet VRF; the web app still runs the older flow — program integration is the next milestone
+
+**7. Market — TAM / SAM / SOM**
 - TAM: social media contest & giveaway tools market — $2.5B (2025) → $5.8B by 2034, 9.8% CAGR
 - SAM: the slice running on API-checkable platforms — Telegram (~1B), Discord (~200M), Farcaster/Base App + fediverse
 - SOM: crypto-native campaigners already running Gleam/Galxe who want an on-chain version, plus Solana/Superteam ecosystem projects
 - Wedge: Malaysia/SEA web3 creator community as first go-to-market cohort
 
-**7. Another Market Fit — Trust Without a Track Record**
+**8. Versus the Incumbents**
+
+| | Gleam.io | Galxe | Fairseed |
+|---|---|---|---|
+| Prize locked before entries | ❌ No | ❌ No | ✅ Yes |
+| Draw recomputable by anyone | ❌ Black box | ❌ Platform algorithm | ✅ Yes |
+| Winner must claim | ⚠️ Chased by organizer | ❌ 14 days or forfeit | ✅ Never — auto-paid |
+| Works at zero reputation | ❌ No | ❌ No | ✅ Yes |
+| Platform reach | ✅ Broad | ✅ Large | ⚠️ Early |
+
+> Behind both on reach. Ahead of both on everything trust depends on.
+
+**9. Trust Without a Track Record**
 - Famous brands/influencers get away with "trust us" — their reputation is the collateral
 - A brand-new creator has none of that: no history, no reason for a stranger to believe the prize is real
 - So new creators can't even use the giveaway playbook that works for established names
+- That's the 0 → 1 problem: algorithms don't surface accounts nobody engages with yet, so the first momentum — roughly the first 50k followers — is the hardest to get
 - Today's workaround — paying bot farms for fake followers/likes — exists *because* organic trust is unavailable at zero reputation
-- ChainDraw replaces reputation with proof: on-chain escrow means the prize is verifiably real before anyone's heard of you
+- Fairseed replaces reputation with proof: the escrowed prize is verifiably real before anyone's heard of you
 - A creator with zero followers can run a giveaway exactly as credible as a celebrity's
-- The actual unlock: ChainDraw manufactures trust for people who have none yet
 
-**8. Why Blockchain (not just a database)**
-- Remove the chain → prize becomes a promise again, draw becomes a black box again
-- PDA-based entries = duplicate-entry prevention enforced by the chain itself, not app logic
-- On-chain commitment = provably funded before anyone risks entering
+**10. Why Blockchain (not just a database)**
+- Remove the chain → the prize is a promise again, the draw is a black box again, the payout is a phishing surface again
+- Duplicate entries are blocked by the runtime itself — a second entry from the same wallet can't be created, no app logic involved
+- Escrow means the organizer *cannot* walk away with the prize after entries open, rather than merely promising not to
+- Sub-cent fees make this viable for prize pools far too small to justify traditional escrow
 
-**9. Close / Contact**
-- Payments track: trustless escrow + auto, phishing-proof payouts
+**11. Close / Contact**
+- Payments track: real escrow + automatic, phishing-proof payouts, proven on devnet
 - CX track: verified engagement + trust-on-demand for creators with zero track record
-- Live: luckydraw.y09.space · Contact info
+- Program, campaign, and every transaction: public and independently checkable

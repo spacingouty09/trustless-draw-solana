@@ -1,4 +1,6 @@
-# ChainDraw — How to Use
+# Fairseed — How to Use
+
+*Formerly ChainDraw — the on-chain program keeps that name (`programs/chaindraw`).* The site root [luckydraw.y09.space](https://luckydraw.y09.space) is the product landing page; the live campaign list is at [`/campaigns`](https://luckydraw.y09.space/campaigns).
 
 ## Organizer Guide — Create → Commit → Draw → Pay
 
@@ -16,14 +18,14 @@
 - Campaign is saved as a draft — not yet visible to entrants
 
 **3. Commit the prize**
-- ChainDraw generates a dedicated wallet for the campaign — a program-controlled address that no one, including the organizer, holds a private key to
+- Fairseed generates a dedicated wallet for the campaign — a program-controlled address that no one, including the organizer, holds a private key to
 - This wallet address is public from the moment the campaign is created — anyone can look it up on an explorer
 - Transfer the full prize amount into that wallet as a real, verifiable on-chain deposit
 - The campaign only goes live once that deposit is confirmed on-chain
 - Anyone can independently check the wallet's balance and see the prize is genuinely funded, before a single entry exists
 
 **4. Campaign goes live**
-- Now visible in the public event listing
+- Now visible in the public campaign list at `/campaigns`
 - Participants can discover it, sign in, complete actions, and enter
 
 **5. Monitor entries**
@@ -52,7 +54,7 @@
 ## Participant Guide — Discover → Enter → Win
 
 **1. Discover a campaign**
-- Find it on the public ChainDraw event listing, or via the organizer's own social post
+- Find it on Fairseed's public campaign list (`/campaigns`), or via the organizer's own social post
 
 **2. Sign in with your platform identity**
 - Sign in with the relevant platform (Mastodon instance login, Sign In With Farcaster, and more over time)
@@ -65,7 +67,7 @@
 - Actually favourite/boost/follow on the real platform — this gets checked, not just assumed
 
 **5. Hit "Enter"**
-- ChainDraw checks each required action against the platform's own API in real time
+- Fairseed checks each required action against the platform's own API in real time
 - **Pending state:** "issuing your ticket" — the entry button disables, your transaction is submitted but not yet confirmed
 - **Success state:** "you're in the draw" — shown only after on-chain confirmation, with a transaction signature linked to an explorer so you can verify it yourself
 - Trying to enter twice with the same wallet or handle fails outright
@@ -214,3 +216,6 @@ carefully-verified raw-bytes integration — is tracked as follow-up work, not g
 - The live app (luckydraw.y09.space) isn't wired to this program yet — it still runs the older
   Memo-transaction commitment flow described in `architecture.md`'s "Key flows" section. That
   integration is the next milestone (M2).
+- Agent-operated campaigns — a customer's own AI agent creating and running a campaign end-to-end
+  isn't supported yet either; it needs M2's frontend/on-chain wiring first. The trust design already
+  supports it once that lands: see `architecture.md`'s "Agent-operated campaigns" section.

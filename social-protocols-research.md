@@ -1,6 +1,6 @@
 # Wallet-Native Social Protocols — Research (2026-08)
 
-Research for ChainDraw's multi-platform expansion: which crypto-social protocols exist, how their identity/wallet layers work, and what integrating each would take. Companion to the ActivityPub module planned in `appidea.md`.
+Research for Fairseed's multi-platform expansion: which crypto-social protocols exist, how their identity/wallet layers work, and what integrating each would take. Companion to the ActivityPub module planned in `appidea.md`.
 
 ## The landscape in one paragraph
 
@@ -17,9 +17,9 @@ There are really three families. **(1) Wallet-native social protocols** — Farc
 | **Read engagement (likes/recasts/follows)** | ✅ Open: Neynar API (canonical), or run/read a Snapchain node directly — no permission needed | ✅ Same data — one Farcaster integration covers Warpcast + Base App audiences | ✅ Lens API/indexer | ✅ REST API; graph data on-chain | ⚠️ Query relays; coverage depends on relay set | ❌ Post-only API for creators (AI-agent publishing); no public read/engagement API | ✅ Pushed to your inbox if you host the post |
 | **Status (2026)** | Protocol acquired by **Neynar (Jan 2026)**, which runs Snapchain validators + canonical API; spec stays MIT/open. Warpcast continues under Neynar | Global launch **Dec 2025**, 140+ countries; the mainstream on-ramp for Farcaster content | Stewardship moved from Avara/Aave to **Mask Network (Jan 2026)** — pivot from protocol experimentation to consumer apps; some ecosystem uncertainty | Series A ($5.75M, USV/Fabric, 2025); active 2026 (Solana Graveyard Hackathon social track); expanding to Aptos/Monad/Berachain | Alive but **user growth flat/declining** late 2025 despite better apps; zaps very active (20M+ in a 2-week window, 2025) | Active as a CEX feature; closed | Threads partially federates; Bluesky bridgeable (Bridgy Fed) |
 | **Giveaway culture fit** | ✅ Crypto-native; airdrops/quests/tipping are normal behavior | ✅✅ Mainstream retail crypto users; creators already monetize posts | ⚠️ Smaller active user base; SocialFi-native | ⚠️ Infra layer, not a consumer network — fit depends on which Tapestry apps have users | ⚠️ Bitcoin-maxi culture; altcoin (Solana) prizes likely unwelcome | ✅ Audience loves giveaways, but platform controls everything | ❌ Anti-promotion, largely anti-crypto |
-| **ChainDraw integration cost** | **Low** — Neynar REST API for engagement + SIWF for login; payout address already on profile (incl. Solana!) | **~Zero extra** once Farcaster adapter exists | Medium — new SDK, new chain, EVM payouts | **Low** — REST API, same chain as ChainDraw; but small end-user reach | Medium — relay querying; payouts would be Lightning, not Solana | Not viable (no read API) | Planned self-hosted module (Fedify) |
+| **Fairseed integration cost** | **Low** — Neynar REST API for engagement + SIWF for login; payout address already on profile (incl. Solana!) | **~Zero extra** once Farcaster adapter exists | Medium — new SDK, new chain, EVM payouts | **Low** — REST API, same chain as Fairseed; but small end-user reach | Medium — relay querying; payouts would be Lightning, not Solana | Not viable (no read API) | Planned self-hosted module (Fedify) |
 
-## Key takeaways for ChainDraw
+## Key takeaways for Fairseed
 
 1. **Farcaster is the highest-leverage single integration.** One adapter (Neynar API + Sign In With Farcaster) covers both Warpcast *and* Coinbase's Base App audience — the largest mainstream wallet-native social reach available. Decisive detail: Farcaster profiles carry **verified Solana addresses**, so the "enter your wallet" step disappears — verify the cast engagement, pay the verified address. That's a materially better UX than the Mastodon flow.
 2. **Base App is not a separate protocol** — don't build a "Base integration"; build the Farcaster adapter and you're in Base App feeds for free. (Its Zora post-tokenization layer is irrelevant to giveaways.)

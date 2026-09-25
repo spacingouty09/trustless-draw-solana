@@ -1,4 +1,6 @@
-# ChainDraw — Architecture
+# Fairseed — Architecture
+
+*Formerly ChainDraw. Code identifiers keep the old name on purpose: the Anchor program (`programs/chaindraw`), the `chaindraw:` Memo/auth prefixes, and the `chaindraw:*` Vite plugin names. The display name comes from `VITE_PRODUCT_NAME` (see Configuration).*
 
 Full-stack TypeScript app: **TanStack Start (React 19, SSR) + Supabase (Postgres) + Solana (devnet)**, deployed on **Vercel** at https://luckydraw.y09.space. Originally scaffolded with Lovable (which keeps a Cloudflare Workers build target working in its sandbox); production runs on Vercel via Nitro's `vercel` preset.
 
@@ -47,9 +49,11 @@ flowchart LR
 src/
   routes/                    # file-based routes
     __root.tsx               # HTML shell, providers, SpeedInsights, error boundaries
-    index.tsx                # public event listing
+    index.tsx                # marketing landing: 10 snap-scroll slides (content in components/slides/)
+    campaigns.tsx            # public event listing (was "/" before the landing page)
     event.$id.tsx            # event detail + entry flow
     organizer.tsx/.index/.$id# organizer dashboard (create, manage, draw, pay)
+    support.tsx              # support / feedback page
     api/public/
       solana-rpc.ts          # POST proxy → SOLANA_RPC (keeps provider key server-side)
       mastodon/callback.ts   # OAuth redirect handler
@@ -62,6 +66,7 @@ src/
     wallet-auth.server.ts    # ed25519 challenge-signature verification (organizer auth)
     solana.ts                # browser-side: commit/payout memo txs via RPC proxy
   components/                # app + shadcn/ui components (wallet, panels, forms)
+    slides/                  # landing: slides.data.ts (copy), section primitives, dot nav, keyboard nav
   integrations/supabase/
     client.ts                # browser client (VITE_ publishable key, RLS enforced)
     client.server.ts         # admin client (SERVICE_ROLE_KEY, bypasses RLS)
@@ -94,9 +99,9 @@ Privileged calls (`commitPool`, `drawAndPay`, `recordPayout`) require **wallet-s
 2. **joinEvent** checks: valid session, matching instance, event `open` and before cutoff, no duplicate `handle_hash` — then queries the Mastodon API for each required interaction (favourite / boost / follow) and logs the outcome to `verification_log`.
 3. On success the entry is stored with the entrant's Solana wallet address for payout.
 
-## Planned on-chain program (Anchor) — designed, not yet built
+## On-chain program (Anchor) — built and tested, not yet wired to the frontend
 
-Designed 2026-08-22 during the Superteam MY "AI x Blockchain Builder Bootcamp" workshop assessment. **Nothing below is implemented**: no Anchor program written, no program ID, nothing deployed. It supersedes the *Key flows* section above (Memo-transaction commitment, Postgres-only entries, server-generated seed) once built — that flow stays the live MVP until this lands.
+Designed 2026-08-22 during the Superteam MY "AI x Blockchain Builder Bootcamp" workshop assessment, and since built out in `programs/chaindraw/`. **The program itself is implemented, tested, and deployed to devnet** — program ID, a passing Anchor test suite, and a full replayable devnet campaign are documented in README.md's devnet-verification section. What's *not* done yet: the frontend still doesn't call it. *Key flows* above (Memo-transaction commitment, Postgres-only entries, server-generated seed) remains the live path the UI actually drives — this section documents the on-chain design as built, and it supersedes *Key flows* once the frontend is wired to it. (See *Agent-operated campaigns* below for why that gap specifically matters for this milestone.)
 
 ### Why the current commit/draw model needs to change
 
@@ -141,12 +146,27 @@ In order of how convincing each is:
 2. **Anchor test suite, weighted toward negative tests** — for a trust product, proving the thing *can't* be abused matters more than the happy path: joining twice from the same wallet must fail (`init` constraint); joining after `end_time` (time-based) or once `entry_count == target_entry_count` (response-based) must fail; `join_campaign` signed by a non-verifier key must fail; drawing before the ending trigger is met must fail; drawing twice must fail. Alongside these, balance assertions rather than bare "no error": vault lamports before/after payout, winner's balance increased by exactly the prize amount, vault left at rent-exempt minimum — plus state read-back (`entry_count` matches actual joins, an entry's `entry_index` is correct).
 3. **A full, replayable devnet campaign** — the actual target proof, worth more than either of the above or UI polish: publish the program ID, the campaign PDA, and every transaction signature (create, each join, draw, payout). Anyone can then take the on-chain randomness value, compute it modulo `entry_count` themselves, and check it matches the winning `entry_index` independently. A passing test suite only proves the code does what the team says it does; a replayable campaign proves the claim to someone who doesn't trust the team at all — which is the whole point.
 
+### Agent-operated campaigns
+
+**Motivation**: campaigns don't have to be created and run by a human clicking through the organizer dashboard. A customer's AI agent should be able to connect to the Fairseed service with one command and create and operate campaigns end-to-end, with no human in the loop — the agent gains access to *our* service rather than bringing its own on-chain setup. The target is agents that can already run a creator channel (e.g. a YouTube channel) but still need help getting it from 0 to 1. The problem that raises is the same custodial-trust problem this doc already names for human organizers, now aimed at an agent: why would a participant believe an autonomous process will actually pay out a prize it promised, rather than stalling, mishandling funds, or just disappearing?
+
+**Why the existing design already answers this**: it doesn't need a new on-chain mechanism — the design above already has the right shape. `create_campaign` is the *only* fund-bearing, trust-sensitive instruction: it transfers `prize_amount` out of whichever wallet signs it, fully into the Campaign PDA — the vault nobody, including that signer, holds a private key to. Every instruction after that — `join_campaign`, `draw_winner`/`resolve_draw`, `claim_prize` — is either permissionless (callable by anyone, including a crank an agent runs unattended) or hard-constrained so funds can only ever land on the winning entry's own wallet. Once a campaign is funded, **the signer's identity stops mattering** — human or agent, nothing they do afterward can redirect, withhold, or reclaim the prize. So a customer's agent can safely be the one operating a campaign's entries/draw/payout, or even the one that funds `create_campaign` itself: either way, participants only ever have to trust the amount actually locked into the vault, which is checkable on-chain the moment the campaign exists — not the agent's future behavior.
+
+**What's still a gap**: this is a property of the *on-chain program*, which the frontend doesn't call yet (see above), and there is no agent-facing interface yet. The landing page's Agents slide advertises `claude mcp add --transport http fairseed https://luckydraw.y09.space/mcp`, but that is a **placeholder** — no `/mcp` endpoint exists (it 404s). Making it real means an MCP server exposing create / verify / settle on top of the M2 frontend↔program wiring. Until then an agent could only drive the web UI like a human would.
+
+**Honest limitation**: `join_campaign`'s `verifier` is still a single trusted signer (see the limitation noted in `join_campaign` above). If a customer's agent also plays that role, participants are trusting the agent's off-chain verification logic specifically — the same unsolved gap that already exists for a human-run verifier, just newly relevant once agents are the ones running it.
+
+One more thing this section deliberately does *not* do: introduce a third custody term. The `/campaigns` page hero's "Solana Fixed Delegation" copy (it was the site's landing page until the slide landing replaced it) refers to a different, unimplemented allowance-style mechanism (`createFixedDelegation`, only referenced in `src/lib/solana.ts` TODOs); what's actually built is the PDA-vault design above, and that's the only mechanism this section relies on.
+
 ## The Solana/SSR problem (why vite.config.ts is unusual)
 
 The Solana wallet stack (`@solana/web3.js`, wallet adapters, `rpc-websockets`) is browser-only and breaks server bundles (missing export conditions, `util.inherits` crashes at module init). The config solves this in layers:
 
 - **`solanaSsrShim`** (vite plugin): in every non-client environment, all `@solana/*` / `@wallet-standard/*` / `rpc-websockets` imports resolve to a Proxy-based stub module, keeping the server bundle clean.
-- **`clientNodeShimAlias`**: forces `buffer`, `process`, `events` to resolve to their npm browser polyfills in the client build (safe-buffer, transitive dep of the wallet stack, crashes otherwise).
+- **`clientNodeShimAlias`**: forces `buffer`, `process`, `events` to resolve to their npm browser polyfills in the client build (safe-buffer, transitive dep of the wallet stack, crashes otherwise). In dev it routes through `this.resolve(..., { skipSelf: true })` so Vite's dep optimizer can hand back the pre-bundled ESM version. **In production builds it must return the package file path directly** (`require.resolve`): Vite 8 rewrites `"buffer/"` to the builtin `"node:buffer"` and re-enters the hook, which `skipSelf` doesn't cover, so the `this.resolve` path loops forever. That loop is what OOM-killed every Vercel build from `acad011` (2026-08-22) until `68918bd` (2026-09-25).
+- **The SSR stub must export every name the app imports from a stubbed package.** Rolldown treats a missing named export as a hard build error (`MISSING_EXPORT`). When you add e.g. `import { Foo } from "@solana/…"` anywhere in `src/`, add `export const Foo = stub;` to the stub in `vite.config.ts` (this is how `WalletNotReadyError` broke the SSR build).
+- **`src/lib/buffer-polyfill.ts` is kept by `package.json` `sideEffects`.** It's imported only for its side effect (setting `globalThis.Buffer` / `global` / `process`). With `"sideEffects": false` the production bundler silently dropped it; `sideEffects` now lists the polyfill and CSS. Keep any new side-effect-only module in that list.
+- **Test with a production build, not dev.** None of the three problems above appear in `vite dev`. Run `bun run build` (Cloudflare preset, used by Lovable) and `VERCEL=1 bun run build` (the Vercel preset production uses); a healthy build finishes in a few seconds.
 - **Runtime gating**: the wallet provider is `lazy()`-imported and mounted under `<ClientOnly>`; `web3.js` itself is dynamically imported inside event handlers only.
 - **RPC proxy**: the browser never talks to a Solana RPC provider directly — `/api/public/solana-rpc` forwards JSON-RPC using the server-side `SOLANA_RPC` secret, so provider API keys stay out of the client bundle.
 
@@ -158,6 +178,7 @@ The Solana wallet stack (`@solana/web3.js`, wallet adapters, `rpc-websockets`) i
 | `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | server | server clients |
 | `SUPABASE_SERVICE_ROLE_KEY` | server | admin client (RLS bypass) — required for auth + writes |
 | `SOLANA_RPC` | server | upstream RPC for the proxy (currently public devnet) |
+| `VITE_PRODUCT_NAME` | build (client + server) | display name; code default `"Fairseed"`. Inlined at build time, so changing it on Vercel only takes effect after a **redeploy** |
 
 ## Deployment
 
