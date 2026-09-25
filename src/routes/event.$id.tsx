@@ -29,7 +29,7 @@ export const Route = createFileRoute("/event/$id")({
     <div className="mx-auto max-w-2xl px-6 py-20 text-center">
       <p className="text-destructive">{error.message}</p>
       <Link
-        to="/"
+        to="/campaigns"
         className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
       >
         ← Back to giveaways
@@ -60,7 +60,7 @@ function EventPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
-      <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/campaigns" className="text-sm text-muted-foreground hover:text-foreground">
         ← All giveaways
       </Link>
       <div className="mt-4 flex flex-wrap items-baseline justify-between gap-4">
